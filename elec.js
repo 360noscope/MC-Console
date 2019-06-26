@@ -24,8 +24,6 @@ function createWindow() {
         slashes: true
     }))
 
-    win.webContents.openDevTools();
-
     win.on('ready-to-show', () => {
         win.show();
     })

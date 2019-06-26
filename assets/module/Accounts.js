@@ -70,22 +70,49 @@ module.exports = function (document, fs) {
     }
 
     function deleteMcAccount(selectedEmail, doneDelete) {
-        fs.readFile('./assets/data/accounts.json', function (err, data) {
-            if (err) { alert(err); }
-            var accountData = JSON.parse(data);
-            if (accountData[selectedEmail]['status'] != 'online') {
-
-            } else {
-                $.alert({
-                    title: 'Error!',
-                    content: "Selected account is still online!",
-                });
+        var accountBox;
+        accountBox = $.confirm({
+            title: 'Delete Account',
+            animation: 'bottom',
+            columnClass: 'col-md-6',
+            containerFluid: true,
+            content: 'Do you want to delete selected account?',
+            buttons: {
+                confirm: {
+                    text: 'OK',
+                    btnClass: 'btn btn-danger',
+                    action: function () {
+                        fs.readFile('./assets/data/accounts.json', function (err, data) {
+                            if (err) { alert(err); }
+                            var accountData = JSON.parse(data);
+                            if (accountData[selectedEmail]['status'] != 'online') {
+                                delete accountData[selectedEmail];
+                            } else {
+                                $.alert({
+                                    title: 'Error!',
+                                    content: "Selected account is still online!",
+                                });
+                            }
+                            fs.writeFile('./assets/data/accounts.json', JSON.stringify(accountData), function (err) {
+                                if (err) { alert(err); }
+                                accountBox.close();
+                                doneDelete();
+                            });
+                        });
+                        return false;
+                    }
+                },
+                cancel: {
+                    text: 'Cancel',
+                    btnClass: 'btn btn-warning',
+                    action: function () {
+    
+                    }
+                }
             }
         });
-        fs.writeFile('./assets/data/accounts.json', JSON.stringify(accountData), function (err) {
-            if (err) { alert(err); }
-            doneDelete();
-        });
+    
+      
     }
 
     return {
