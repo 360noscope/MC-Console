@@ -9,7 +9,7 @@
   "author": "Panupong",
   "license": "ISC",
   "devDependencies": {
-    "electron": "^5.0.0",
+    "electron": "5.0.6",
     "electron-rebuild": "^1.8.5",
     "node-gyp": "^5.0.1",
     "windows-build-tools": "^5.1.0"
@@ -26,7 +26,6 @@
     "datatables.net-rowgroup-bs4": "^1.1.0",
     "jquery": "^3.4.1",
     "jquery-confirm": "^3.3.4",
-    "jquery.easing": "^1.4.1",
-    "mineflayer": "^2.9.0"
+    "jquery.easing": "^1.4.1"
   }
 }

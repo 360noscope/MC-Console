@@ -1,0 +1,16 @@
+{
+    "minesaga": {
+        "address": "play.minesaga.org",
+        "port": "",
+        "realms": [
+            "western"
+        ]
+    },
+    "test": {
+        "address": "play.minesaga.org",
+        "port": "",
+        "realms": [
+            "space"
+        ]
+    }
+}

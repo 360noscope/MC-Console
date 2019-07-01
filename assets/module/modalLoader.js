@@ -81,5 +81,44 @@ module.exports = function (document, loader, fs) {
             }
         });
     }
-    return { accountModal: accountModal }
+
+    function accountConsoleModal() {
+        var consoleBox;
+        consoleBox = $.confirm({
+            title: 'Console',
+            animation: 'bottom',
+            columnClass: 'col-md-6',
+            containerFluid: true,
+            buttons: {
+                confirm: {
+                    text: 'Save',
+                    btnClass: 'btn btn-success',
+                    isHidden: true,
+                    action: function () {
+                        return false;
+                    }
+                },
+                cancel: {
+                    text: 'Close',
+                    btnClass: 'btn btn-danger',
+                    action: function () {
+
+                    }
+                }
+            },
+            onOpenBefore: function () {
+                consoleBox.showLoading();
+            },
+            onContentReady: function () {
+                loader.consoleModal(function () {
+                    consoleBox.hideLoading();
+                });
+            },
+        });
+    }
+
+    return {
+        accountModal: accountModal,
+        accountConsoleModal: accountConsoleModal
+    }
 }
