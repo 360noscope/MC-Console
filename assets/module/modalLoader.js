@@ -1,4 +1,4 @@
-module.exports = function (document, loader, fs) {
+module.exports = function (document, loader, fs, socket) {
     const accounts = require('./Accounts.js')(document, fs);
     function accountModal(edit = false, editData = null) {
         var accountBox, boxTitle = 'Add new minecraft account';
@@ -82,7 +82,7 @@ module.exports = function (document, loader, fs) {
         });
     }
 
-    function accountConsoleModal() {
+    function accountConsoleModal(doneLoad) {
         var consoleBox;
         consoleBox = $.confirm({
             title: 'Console',
@@ -112,7 +112,11 @@ module.exports = function (document, loader, fs) {
             onContentReady: function () {
                 loader.consoleModal(function () {
                     consoleBox.hideLoading();
+                    doneLoad();
                 });
+            },
+            onClose: function () {
+                socket.removeListener('chatMsg');
             },
         });
     }

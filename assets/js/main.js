@@ -4,12 +4,12 @@ require('datatables.net-responsive-bs4')();
 require('datatables.net-rowgroup-bs4')();
 
 const fs = require('fs');
+var socket = io("http://localhost:4500");
 const loader = require('../module/pageLoader.js')(document, fs);
-const modal = require('../module/modalLoader.js')(document, loader, fs);
+const modal = require('../module/modalLoader.js')(document, loader, fs, socket);
 const accounts = require('../module/Accounts.js')(document, fs);
-const botter = require('../module/Botter.js')(document);
-var accountTable, serverTable, accountScreenList, serverScreenList,
-    botList = {};
+const chatter = require('../module/Chatter.js')();
+var accountTable, serverTable, accountScreenList, serverScreenList;
 $(document).ready(function () {
 
 });
@@ -65,7 +65,7 @@ $(document).on('click', 'div[id^="card-"] > div > div > div > div a.offline', fu
         server = cardParent.find('select[id^="accServer-"]').val(),
         realm = cardParent.find('select[id^="accRealm-"]').val();
     loader.consoleOnlineSwitch($(this));
-    botter.joinServer({
+    socket.emit('joinServer', {
         'server': serverScreenList[server]['address'],
         'realm': realm,
         'account': selectedAccount
@@ -76,13 +76,21 @@ $(document).on('click', 'div[id^="card-"] > div > div > div > div a.online', fun
     e.preventDefault();
     var cardParent = $(this).parents().eq(4);
     var selectedAccount = accountScreenList[cardParent.attr('id')];
-    botter.leaveServer(selectedAccount['email']);
+    socket.emit('ServerDisconnect', selectedAccount['email']);
     loader.consoleOfflineSwitch($(this));
 });
 
 $(document).on('click', 'a.lConsole', function (e) {
     e.preventDefault();
-    modal.accountConsoleModal();
+    var cardParent = $(this).parent();
+    var server = cardParent.find('select[id^="accServer-"]').val();
+    modal.accountConsoleModal(function () {
+        socket.on('chatMsg', function (res) {
+            if (server == 'minesaga') {
+                chatter.minesaga(res);
+            }
+        });
+    });
 });
 
 $(document).on('click', '#manageServer', function (e) {
