@@ -1,6 +1,6 @@
 module.exports = function () {
-    function minesaga(res) {
-        var msgOrigin = res.origin, msgData = res.data, colorMatch = {
+    function minesaga(res, box) {
+        var msgData = res.data, colorMatch = {
             'dark_red': '#AA0000',
             'red': '#FF5555',
             'gold': '#FFAA00',
@@ -17,16 +17,17 @@ module.exports = function () {
             'gray': '#AAAAAA',
             'dark_gray': '#555555',
             'black': '#000000'
-        };
+        }, chatBox = box.find('#chatBox');
         if (msgData.extra == undefined) {
-            //console.log(msgData);
+            if (msgData.text != '') {
+                chatBox.append('<span style="color:' + colorMatch[msgData['color']] + '; white-space: nowrap;">' + msgData.text + '</span><br>');
+            }
         } else {
             var msgBlock = msgData.extra;
             if (msgBlock.length == 1) {
                 var msgObj = msgBlock[0];
                 if (msgObj.hasOwnProperty('extra')) {
                     var textOnly = [], msgList = msgObj['extra'];
-                    console.log(msgObj);
                     msgList.forEach(element => {
                         if (element['text'] != '') {
                             if (element['color'] == undefined) {
@@ -37,13 +38,13 @@ module.exports = function () {
                         }
                     });
                     textOnly.push('<br>');
-                    if ($('#chatBox').length > 0) {
-                        $('#chatBox').append(textOnly.join(''));
+                    if (chatBox.length > 0) {
+                        chatBox.append(textOnly.join(''));
                     }
                 } else {
-                    if ($('#chatBox').length > 0) {
+                    if (chatBox.length > 0) {
                         if (msgObj != '') {
-                            $('#chatBox').append('<span style="color:' + colorMatch[msgObj['color']] + '; white-space: nowrap;">' + msgObj['text'] + '</span><br>');
+                            chatBox.append('<span style="color:' + colorMatch[msgObj['color']] + '; white-space: nowrap;">' + msgObj['text'] + '</span><br>');
                         }
                     }
                 }
@@ -59,10 +60,13 @@ module.exports = function () {
                     }
                 });
                 textOnly.push('<br>');
-                if ($('#chatBox').length > 0) {
-                    $('#chatBox').append(textOnly.join(''));
+                if (chatBox.length > 0) {
+                    chatBox.append(textOnly.join(''));
                 }
             }
+            $(chatBox).animate({
+                scrollTop: $(chatBox).get(0).scrollHeight
+            }, 2000);
         }
     }
     return { minesaga: minesaga }

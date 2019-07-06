@@ -87,7 +87,8 @@ module.exports = function (document, loader, fs, socket) {
         consoleBox = $.confirm({
             title: 'Console',
             animation: 'bottom',
-            columnClass: 'col-md-6',
+            theme: 'dark',
+            columnClass: 'col-md-8',
             containerFluid: true,
             buttons: {
                 confirm: {
@@ -112,7 +113,7 @@ module.exports = function (document, loader, fs, socket) {
             onContentReady: function () {
                 loader.consoleModal(function () {
                     consoleBox.hideLoading();
-                    doneLoad();
+                    doneLoad(consoleBox);
                 });
             },
             onClose: function () {

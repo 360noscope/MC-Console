@@ -70,6 +70,9 @@ $(document).on('click', 'div[id^="card-"] > div > div > div > div a.offline', fu
         'realm': realm,
         'account': selectedAccount
     });
+    socket.on('joinError', function (res) {
+        alert('Failed to connect selected Account!');
+    });
 });
 
 $(document).on('click', 'div[id^="card-"] > div > div > div > div a.online', function (e) {
@@ -83,14 +86,25 @@ $(document).on('click', 'div[id^="card-"] > div > div > div > div a.online', fun
 $(document).on('click', 'a.lConsole', function (e) {
     e.preventDefault();
     var cardParent = $(this).parent();
+    var selectedEmail = accountScreenList[$(this).parents().eq(4).attr('id')]['email'];
     var server = cardParent.find('select[id^="accServer-"]').val();
-    modal.accountConsoleModal(function () {
+    modal.accountConsoleModal(function (cmodal) {
+        cmodal.$body.find('#chatEmail').val(selectedEmail);
         socket.on('chatMsg', function (res) {
             if (server == 'minesaga') {
-                chatter.minesaga(res);
+                chatter.minesaga(res, cmodal.$body);
             }
         });
     });
+});
+
+$(document).on('submit', 'form[id^="chatForm"]', function (e) {
+    e.preventDefault();
+    var boxEmail = $(this).parent().find('#chatEmail').val();
+    if ($('#msgInput').val() != '') {
+        socket.emit('sendChat', { 'email': boxEmail, 'message': $(this).parent().find('#msgInput').val() });
+        $(this).parent().find('#msgInput').val('');
+    }
 });
 
 $(document).on('click', '#manageServer', function (e) {
