@@ -82,12 +82,12 @@ module.exports = function (document, loader, fs) {
         });
     }
 
-    function accountConsoleModal(doneLoad) {
-        var consoleBox;
-        consoleBox = $.confirm({
+    function consoleModal(bot, doneLoad) {
+        var consoleBox = $.confirm({
             title: 'Console',
             animation: 'bottom',
             theme: 'dark',
+            content: '',
             columnClass: 'col-md-8',
             containerFluid: true,
             buttons: {
@@ -107,12 +107,13 @@ module.exports = function (document, loader, fs) {
                     }
                 }
             },
-            onOpenBefore: function () {
-                consoleBox.showLoading();
+            onClose: function () {
+                bot.removeListener('message', function () {
+                    console.log('closing chat');
+                });
             },
             onContentReady: function () {
-                loader.consoleModal(function () {
-                    consoleBox.hideLoading();
+                loader.consoleModal(consoleBox, function () {
                     doneLoad(consoleBox);
                 });
             }
@@ -121,6 +122,6 @@ module.exports = function (document, loader, fs) {
 
     return {
         accountModal: accountModal,
-        accountConsoleModal: accountConsoleModal
+        consoleModal: consoleModal
     }
 }

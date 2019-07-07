@@ -65,8 +65,9 @@ module.exports = function (document, fs) {
         });
     }
 
-    function consoleModal(doneLoad) {
-        $(document).find('.jconfirm-content').load('../html/console.html', function () {
+    function consoleModal(container, doneLoad) {
+        $.get('../html/console.html', function(data){
+            container.setContent(data);
             doneLoad();
         });
     }

@@ -4,13 +4,10 @@ require('datatables.net-responsive-bs4')();
 require('datatables.net-rowgroup-bs4')();
 
 const fs = require('fs');
-//var socket = io("http://localhost:4500");
 const loader = require('../module/pageLoader.js')(document, fs);
 const modal = require('../module/modalLoader.js')(document, loader, fs);
 const accounts = require('../module/Accounts.js')(document, fs);
-const chatter = require('../module/Chatter.js')();
-const botter = require('../module/Botter.js')();
-var accountTable, serverTable, accountScreenList, serverScreenList, botList = {};
+var accountTable, serverTable, accountScreenList, serverScreenList;
 $(document).ready(function () {
 });
 
@@ -58,78 +55,68 @@ $(document).on('change', 'select[id^="accServer-"]', function (e) {
     });
 });
 
+//Botting part
+const chatter = require('../module/Chatter.js')();
+const botter = require('../module/Botter.js')();
+const bots = {};
 $(document).on('click', 'div[id^="card-"] > div > div > div > div a.offline', function (e) {
     e.preventDefault();
-    var cardParent = $(this).parents().eq(4);
-    var selectedAccount = accountScreenList[cardParent.attr('id')],
-        server = cardParent.find('select[id^="accServer-"]').val(),
-        realm = cardParent.find('select[id^="accRealm-"]').val();
-    loader.consoleOnlineSwitch($(this));
+    const realParent = $(this);
+    const selectedAccount = accountScreenList[$(this).parents().eq(4).attr('id')],
+        server = $(this).parents().eq(4).find('select[id^="accServer-"]').val(),
+        realm = $(this).parents().eq(4).find('select[id^="accRealm-"]').val();
     if (server == 'minesaga') {
-        botter.minesagaJoin({
+        const data = {
             'server': serverScreenList[server]['address'],
-            'realm': realm,
             'account': selectedAccount
-        }, function (bot) {
-            botList[selectedAccount['email']] = bot;
-            console.log(botList);
+        };
+        botter.minesagaJoin(data, function (bot) {
+            bot.on('error', function (err) {
+                alert('Cannot join: ' + err);
+            });
+            bot.on('login', function () {
+                loader.consoleOnlineSwitch(realParent);
+                //join queue selected realm
+                bot.chat('/joinqueue ' + realm);
+                //create chat console box
+                $(document).on('click', 'a.lConsole', function (e) {
+                    e.preventDefault();
+                    modal.consoleModal(bot, function (cmodal) {
+                        cmodal.$body.find('#parentCardID').val(realParent.parents().eq(4).attr('id'));
+                        bot.on('message', function (res) {
+                            chatter.minesaga(cmodal.$body, res);
+                        });
+                    });
+                });
+                bot.on('kicked', function (reason, loggedIn) {
+                    //bot = mineflayer.createBot(serverOption);
+                    console.log(reason);
+                });
+                bots[realParent.parents().eq(4).attr('id')] = bot;
+            });
         });
     }
-
-    /* socket.emit('joinServer', {
-         'server': serverScreenList[server]['address'],
-         'realm': realm,
-         'account': selectedAccount
-     });
-     socket.on('joinError', function (res) {
-         alert('Failed to connect selected Account!');
-     });*/
 });
 
 $(document).on('click', 'div[id^="card-"] > div > div > div > div a.online', function (e) {
     e.preventDefault();
-    var cardParent = $(this).parents().eq(4);
-    var selectedEmail = accountScreenList[$(this).parents().eq(4).attr('id')]['email'];
-    //socket.emit('ServerDisconnect', selectedAccount['email']);
-    var bot = botList[selectedEmail];
+    const bot = bots[$(this).parents().eq(4).attr('id')];
     bot.end();
-    delete botList[selectedEmail];
+    delete bot[$(this).parents().eq(4).attr('id')];
     loader.consoleOfflineSwitch($(this));
 });
 
-$(document).on('click', 'a.lConsole', function (e) {
-    e.preventDefault();
-    var cardParent = $(this).parent();
-    var selectedEmail = accountScreenList[$(this).parents().eq(4).attr('id')]['email'];
-    var bot = botList[selectedEmail];
-    var server = cardParent.find('select[id^="accServer-"]').val();
-    modal.accountConsoleModal(function (cmodal) {
-        cmodal.$body.find('#chatEmail').val(selectedEmail);
-        if (server == 'minesaga') {
-            //throw out message
-            bot.on('message', function (res) {
-                //socket.emit('chatMsg', { 'data': res });
-                chatter.minesaga(res, cmodal.$body);
-            });
-        }
-        /*socket.on('chatMsg', function (res) {
-            if (server == 'minesaga') {
-                chatter.minesaga(res, cmodal.$body);
-            }
-        });*/
-    });
-});
 
 $(document).on('submit', 'form[id^="chatForm"]', function (e) {
     e.preventDefault();
-    var boxEmail = $(this).parent().find('#chatEmail').val();
-    var bot = botList[boxEmail];
-    if ($('#msgInput').val() != '') {
-        //socket.emit('sendChat', { 'email': boxEmail, 'message': $(this).parent().find('#msgInput').val() });
+    var bot = bots[$(this).parent().find('#parentCardID').val()];
+    if ($(this).parent().find('#msgInput').val() != '') {
         bot.chat($(this).parent().find('#msgInput').val());
         $(this).parent().find('#msgInput').val('');
     }
 });
+
+//end botting part
 
 $(document).on('click', '#manageServer', function (e) {
     e.preventDefault();

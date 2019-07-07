@@ -1,5 +1,5 @@
 module.exports = function () {
-    function minesaga(res, box) {
+    function minesaga(box, res) {
         var msgData = res.data, colorMatch = {
             'dark_red': '#AA0000',
             'red': '#FF5555',
@@ -18,12 +18,12 @@ module.exports = function () {
             'dark_gray': '#555555',
             'black': '#000000'
         }, chatBox = box.find('#chatBox');
-        if (msgData.extra == undefined) {
-            if (msgData.text != '') {
-                chatBox.append('<span style="color:' + colorMatch[msgData['color']] + '; white-space: nowrap;">' + msgData.text + '</span><br>');
+        if (res.extra == undefined) {
+            if (res.text != '') {
+                chatBox.append('<span style="color:' + colorMatch[res['color']] + '; white-space: nowrap;">' + res.text + '</span><br>');
             }
         } else {
-            var msgBlock = msgData.extra;
+            var msgBlock = res.extra;
             if (msgBlock.length == 1) {
                 var msgObj = msgBlock[0];
                 if (msgObj.hasOwnProperty('extra')) {
