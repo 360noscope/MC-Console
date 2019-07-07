@@ -4,14 +4,14 @@ require('datatables.net-responsive-bs4')();
 require('datatables.net-rowgroup-bs4')();
 
 const fs = require('fs');
-var socket = io("http://localhost:4500");
+//var socket = io("http://localhost:4500");
 const loader = require('../module/pageLoader.js')(document, fs);
-const modal = require('../module/modalLoader.js')(document, loader, fs, socket);
+const modal = require('../module/modalLoader.js')(document, loader, fs);
 const accounts = require('../module/Accounts.js')(document, fs);
 const chatter = require('../module/Chatter.js')();
-var accountTable, serverTable, accountScreenList, serverScreenList;
+const botter = require('../module/Botter.js')();
+var accountTable, serverTable, accountScreenList, serverScreenList, botList = {};
 $(document).ready(function () {
-
 });
 
 $(document).on('click', '#manageAccount', function (e) {
@@ -65,21 +65,35 @@ $(document).on('click', 'div[id^="card-"] > div > div > div > div a.offline', fu
         server = cardParent.find('select[id^="accServer-"]').val(),
         realm = cardParent.find('select[id^="accRealm-"]').val();
     loader.consoleOnlineSwitch($(this));
-    socket.emit('joinServer', {
-        'server': serverScreenList[server]['address'],
-        'realm': realm,
-        'account': selectedAccount
-    });
-    socket.on('joinError', function (res) {
-        alert('Failed to connect selected Account!');
-    });
+    if (server == 'minesaga') {
+        botter.minesagaJoin({
+            'server': serverScreenList[server]['address'],
+            'realm': realm,
+            'account': selectedAccount
+        }, function (bot) {
+            botList[selectedAccount['email']] = bot;
+            console.log(botList);
+        });
+    }
+
+    /* socket.emit('joinServer', {
+         'server': serverScreenList[server]['address'],
+         'realm': realm,
+         'account': selectedAccount
+     });
+     socket.on('joinError', function (res) {
+         alert('Failed to connect selected Account!');
+     });*/
 });
 
 $(document).on('click', 'div[id^="card-"] > div > div > div > div a.online', function (e) {
     e.preventDefault();
     var cardParent = $(this).parents().eq(4);
-    var selectedAccount = accountScreenList[cardParent.attr('id')];
-    socket.emit('ServerDisconnect', selectedAccount['email']);
+    var selectedEmail = accountScreenList[$(this).parents().eq(4).attr('id')]['email'];
+    //socket.emit('ServerDisconnect', selectedAccount['email']);
+    var bot = botList[selectedEmail];
+    bot.end();
+    delete botList[selectedEmail];
     loader.consoleOfflineSwitch($(this));
 });
 
@@ -87,22 +101,32 @@ $(document).on('click', 'a.lConsole', function (e) {
     e.preventDefault();
     var cardParent = $(this).parent();
     var selectedEmail = accountScreenList[$(this).parents().eq(4).attr('id')]['email'];
+    var bot = botList[selectedEmail];
     var server = cardParent.find('select[id^="accServer-"]').val();
     modal.accountConsoleModal(function (cmodal) {
         cmodal.$body.find('#chatEmail').val(selectedEmail);
-        socket.on('chatMsg', function (res) {
+        if (server == 'minesaga') {
+            //throw out message
+            bot.on('message', function (res) {
+                //socket.emit('chatMsg', { 'data': res });
+                chatter.minesaga(res, cmodal.$body);
+            });
+        }
+        /*socket.on('chatMsg', function (res) {
             if (server == 'minesaga') {
                 chatter.minesaga(res, cmodal.$body);
             }
-        });
+        });*/
     });
 });
 
 $(document).on('submit', 'form[id^="chatForm"]', function (e) {
     e.preventDefault();
     var boxEmail = $(this).parent().find('#chatEmail').val();
+    var bot = botList[boxEmail];
     if ($('#msgInput').val() != '') {
-        socket.emit('sendChat', { 'email': boxEmail, 'message': $(this).parent().find('#msgInput').val() });
+        //socket.emit('sendChat', { 'email': boxEmail, 'message': $(this).parent().find('#msgInput').val() });
+        bot.chat($(this).parent().find('#msgInput').val());
         $(this).parent().find('#msgInput').val('');
     }
 });
