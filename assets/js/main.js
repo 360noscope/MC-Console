@@ -76,10 +76,12 @@ $(document).on('click', 'div[id^="card-"] > div > div > div > div a.offline', fu
         botter.minesagaJoin(data, function () {
             loader.consoleOnlineSwitch(realParent);
             botEventEmit.on('payout', function (res) {
-                console.log('Payout: ' + res);
+                const payoutDisplay = realParent.parent().find('div:nth-child(6)').children().get(1);
+                $(payoutDisplay).text(res);
             });
             botEventEmit.on('balance', function (res) {
-                console.log('Balance: ' + res);
+                const balanceDisplay = realParent.parent().find('div:nth-child(5)').children().get(1);
+                $(balanceDisplay).text(res);
             });
         });
     }

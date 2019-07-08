@@ -41,8 +41,8 @@ module.exports = function (document, fs) {
                             var cardContent = $(document).find('div[id="' + cardID + '"] > div > div > div > div');
                             cardContent.find('div:nth-child(2) > select').attr('id', servSelectID);
                             cardContent.find('div:nth-child(3) > select').attr('id', realmSelectID);
-                            cardContent.find('div:nth-child(7)').text(element);
-                            cardContent.find('div:nth-child(8)').text('18:00');
+                            cardContent.find('div:nth-child(8)').text(element);
+                            cardContent.find('div:nth-child(9)').text('18:00');
                             Object.keys(serverdata).forEach(function (element) {
                                 cardContent.find('select[id="' + servSelectID + '"]').append($("<option />").val(element).text(element));
                                 serverList[element] = serverdata[element];

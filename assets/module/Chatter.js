@@ -21,7 +21,6 @@ module.exports = function () {
         if (res.extra == undefined) {
             if (res.text != '') {
                 chatBox.append('<span style="color:' + colorMatch[res['color']] + '; white-space: nowrap;">' + res.text + '</span><br>');
-                console.log(res.text);
             }
         } else {
             const msgBlock = res.extra;
@@ -82,10 +81,10 @@ module.exports = function () {
             });
             if (pattern['payout'].test(text.join(''))) {
                 data['type'] = 'payout';
-                data['result'] = text.join('').match(moneyPattern);
+                data['result'] = text.join('').match(moneyPattern)[0];
             } else if (pattern['balance'].test(text.join(''))) {
                 data['type'] = 'balance';
-                data['result'] = text.join('').match(moneyPattern);
+                data['result'] = text.join('').match(moneyPattern)[0];
             }
         }
         return data;

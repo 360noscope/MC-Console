@@ -26,10 +26,12 @@ module.exports = function (eventEmit, chatter) {
             bot.chat('/joinqueue ' + data['realm']);
             bot.on('message', function (res) {
                 const moneyResult = chatter.catchMoney(res);
-                if(moneyResult['type'] == 'payout'){
-                    bot.chat('/bal')
+                if (moneyResult.hasOwnProperty('type')) {
+                    if (moneyResult['type'] == 'payout') {
+                        bot.chat('/bal')
+                    }
+                    eventEmit.emit(moneyResult['type'], moneyResult['result']);
                 }
-                eventEmit.emit(moneyResult['type'], moneyResult['result']);
                 eventEmit.emit('chatMsg', res);
             });
             bots[data['cardId']] = bot;
