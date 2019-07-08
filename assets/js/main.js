@@ -73,16 +73,39 @@ $(document).on('click', 'div[id^="card-"] > div > div > div > div a.offline', fu
             'realm': realm,
             'cardId': realParent.parents().eq(4).attr('id')
         };
+        let payoutCounter = 0, totalPayout = 0;
+        botEventEmit.on('payout', function (res) {
+            $(realParent.parent().find('div.acc-payout').children().get(1)).text(res);
+            payoutCounter++;
+            totalPayout += parseInt(res.substring(1).replace(/\,/g, ''), 10);
+            const avgPayout = (totalPayout / payoutCounter).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            $(realParent.parent().find('div.acc-avg-payout').children().get(1)).text('$' + avgPayout);
+        });
+        botEventEmit.on('balance', function (res) {
+            $(realParent.parent().find('div.acc-balance').children().get(1)).text(res);
+        });
+        botEventEmit.on('Loggedin', function () {
+            realParent.parent().find('div.acc-status').text('Waiting in hub...');
+            realParent.parents().eq(4).find('select[id^="accServer-"]').prop('disabled', true);
+            realParent.parents().eq(4).find('select[id^="accRealm-"]').prop('disabled', true);
+        });
+        botEventEmit.on('Hub', function () {
+            realParent.parent().find('div.acc-status').text('Queueing on ' + realm + '...');
+        });
+        botEventEmit.on('Inside', function () {
+            realParent.parent().find('div.acc-status').text('Stalking your chunk...');
+        });
+        botEventEmit.on('Logout', function () {
+            realParent.parent().find('div.acc-status').text('');
+            $(realParent.parent().find('div.acc-balance').children().get(1)).text('-');
+            $(realParent.parent().find('div.acc-payout').children().get(1)).text('-');
+            $(realParent.parent().find('div.acc-avg-payout').children().get(1)).text('-');
+            realParent.parents().eq(4).find('select[id^="accServer-"]').prop('disabled', false);
+            realParent.parents().eq(4).find('select[id^="accRealm-"]').prop('disabled', false);
+        });
+
         botter.minesagaJoin(data, function () {
             loader.consoleOnlineSwitch(realParent);
-            botEventEmit.on('payout', function (res) {
-                const payoutDisplay = realParent.parent().find('div:nth-child(6)').children().get(1);
-                $(payoutDisplay).text(res);
-            });
-            botEventEmit.on('balance', function (res) {
-                const balanceDisplay = realParent.parent().find('div:nth-child(5)').children().get(1);
-                $(balanceDisplay).text(res);
-            });
         });
     }
 });

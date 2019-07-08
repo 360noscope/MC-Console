@@ -19,18 +19,23 @@ module.exports = function (eventEmit, chatter) {
             console.log("You're kicked because " + reason);
         });
         bot.on('end', function () {
-            console.log('Server disconected! reconnect in 10 seconds');
+            console.log('Account disconected!');
+            eventEmit.emit('Logout', '');
         });
         bot.on('login', function () {
-            //join queue selected realm
-            bot.chat('/joinqueue ' + data['realm']);
+            eventEmit.emit('Loggedin', '');
+            console.log(email + ' account just connected!');
             bot.on('message', function (res) {
-                const moneyResult = chatter.catchMoney(res);
-                if (moneyResult.hasOwnProperty('type')) {
-                    if (moneyResult['type'] == 'payout') {
-                        bot.chat('/bal')
+                const eventResult = chatter.catchEvent(res);
+                if (eventResult.hasOwnProperty('type')) {
+                    if (eventResult['type'] == 'payout') {
+                        bot.chat('/bal');
+                    } else if (eventResult['type'] == 'Hub') {
+                        bot.chat('/joinqueue ' + data['realm']);
+                    } else if (eventResult['type'] == 'Inside') {
+                        bot.chat('/bal');
                     }
-                    eventEmit.emit(moneyResult['type'], moneyResult['result']);
+                    eventEmit.emit(eventResult['type'], eventResult['result']);
                 }
                 eventEmit.emit('chatMsg', res);
             });

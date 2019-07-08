@@ -66,10 +66,12 @@ module.exports = function () {
         }
     }
 
-    function catchMoney(msgData) {
+    function catchEvent(msgData) {
         const pattern = {
             'payout': /Your payout: \$(\d{0,3},)?(\d{3},)?\d{0,3}/g,
-            'balance': /Balance: \$(\d{0,3},)?(\d{3},)?\d{0,3}/g
+            'balance': /Balance: \$(\d{0,3},)?(\d{3},)?\d{0,3}/g,
+            'hub': /You're now connected to hub-/g,
+            'inside': /You're now connected to the /g
         },
             data = {}, moneyPattern = /\$(\d{0,3},)?(\d{3},)?\d{0,3}/g;
         if (msgData.extra != undefined && msgData.extra.length > 1) {
@@ -85,6 +87,12 @@ module.exports = function () {
             } else if (pattern['balance'].test(text.join(''))) {
                 data['type'] = 'balance';
                 data['result'] = text.join('').match(moneyPattern)[0];
+            } else if (pattern['hub'].test(text.join(''))) {
+                data['type'] = 'Hub';
+                data['result'] = '';
+            } else if (pattern['inside'].test(text.join(''))) {
+                data['type'] = 'Inside';
+                data['result'] = '';
             }
         }
         return data;
@@ -92,6 +100,6 @@ module.exports = function () {
 
     return {
         minesaga: minesaga,
-        catchMoney: catchMoney
+        catchEvent: catchEvent
     }
 }
