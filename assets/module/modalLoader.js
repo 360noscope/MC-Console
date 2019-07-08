@@ -82,7 +82,7 @@ module.exports = function (document, loader, fs) {
         });
     }
 
-    function consoleModal(bot, doneLoad) {
+    function consoleModal(eventEmit, doneLoad) {
         var consoleBox = $.confirm({
             title: 'Console',
             animation: 'bottom',
@@ -108,9 +108,7 @@ module.exports = function (document, loader, fs) {
                 }
             },
             onClose: function () {
-                bot.removeListener('message', function () {
-                    console.log('closing chat');
-                });
+                eventEmit.emit('consoleClose');
             },
             onContentReady: function () {
                 loader.consoleModal(consoleBox, function () {

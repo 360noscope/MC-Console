@@ -4,6 +4,7 @@ require('datatables.net-responsive-bs4')();
 require('datatables.net-rowgroup-bs4')();
 
 const fs = require('fs');
+const EventEmitter = require('events').EventEmitter;
 const loader = require('../module/pageLoader.js')(document, fs);
 const modal = require('../module/modalLoader.js')(document, loader, fs);
 const accounts = require('../module/Accounts.js')(document, fs);
@@ -56,62 +57,62 @@ $(document).on('change', 'select[id^="accServer-"]', function (e) {
 });
 
 //Botting part
+const botEventEmit = new EventEmitter();
 const chatter = require('../module/Chatter.js')();
-const botter = require('../module/Botter.js')();
-const bots = {};
+const botter = require('../module/Botter.js')(botEventEmit, chatter);
 $(document).on('click', 'div[id^="card-"] > div > div > div > div a.offline', function (e) {
     e.preventDefault();
     const realParent = $(this);
     const selectedAccount = accountScreenList[$(this).parents().eq(4).attr('id')],
-        server = $(this).parents().eq(4).find('select[id^="accServer-"]').val(),
-        realm = $(this).parents().eq(4).find('select[id^="accRealm-"]').val();
+        server = realParent.parents().eq(4).find('select[id^="accServer-"]').val(),
+        realm = realParent.parents().eq(4).find('select[id^="accRealm-"]').val();
     if (server == 'minesaga') {
         const data = {
             'server': serverScreenList[server]['address'],
-            'account': selectedAccount
+            'account': selectedAccount,
+            'realm': realm,
+            'cardId': realParent.parents().eq(4).attr('id')
         };
-        botter.minesagaJoin(data, function (bot) {
-            bot.on('error', function (err) {
-                alert('Cannot join: ' + err);
+        botter.minesagaJoin(data, function () {
+            loader.consoleOnlineSwitch(realParent);
+            botEventEmit.on('payout', function (res) {
+                console.log('Payout: ' + res);
             });
-            bot.on('login', function () {
-                loader.consoleOnlineSwitch(realParent);
-                //join queue selected realm
-                bot.chat('/joinqueue ' + realm);
-                //create chat console box
-                $(document).on('click', 'a.lConsole', function (e) {
-                    e.preventDefault();
-                    modal.consoleModal(bot, function (cmodal) {
-                        cmodal.$body.find('#parentCardID').val(realParent.parents().eq(4).attr('id'));
-                        bot.on('message', function (res) {
-                            chatter.minesaga(cmodal.$body, res);
-                        });
-                    });
-                });
-                bot.on('kicked', function (reason, loggedIn) {
-                    //bot = mineflayer.createBot(serverOption);
-                    console.log(reason);
-                });
-                bots[realParent.parents().eq(4).attr('id')] = bot;
+            botEventEmit.on('balance', function (res) {
+                console.log('Balance: ' + res);
             });
         });
     }
 });
 
+$(document).on('click', 'a.lConsole', function (e) {
+    e.preventDefault();
+    const cardId = $(this).parents().eq(4).attr('id');
+    modal.consoleModal(botEventEmit, function (cmodal) {
+        cmodal.$body.find('form#chatForm #parentCardID').val(cardId);
+        botEventEmit.on('chatMsg', function (msg) {
+            chatter.minesaga(cmodal.$body, msg);
+        });
+        botEventEmit.on('consoleClose', function () {
+            botEventEmit.removeListener('chatMsg', function () {
+                console.log('removed chat listener');
+            });
+        });
+    });
+});
+
 $(document).on('click', 'div[id^="card-"] > div > div > div > div a.online', function (e) {
     e.preventDefault();
-    const bot = bots[$(this).parents().eq(4).attr('id')];
-    bot.end();
-    delete bot[$(this).parents().eq(4).attr('id')];
+    botter.botDisconnect($(this).parents().eq(4).attr('id'));
     loader.consoleOfflineSwitch($(this));
 });
 
 
 $(document).on('submit', 'form[id^="chatForm"]', function (e) {
+    const botId = $(this).parent().find('#parentCardID').val();
     e.preventDefault();
-    var bot = bots[$(this).parent().find('#parentCardID').val()];
     if ($(this).parent().find('#msgInput').val() != '') {
-        bot.chat($(this).parent().find('#msgInput').val());
+        botter.botChat(botId, $(this).parent().find('#msgInput').val());
         $(this).parent().find('#msgInput').val('');
     }
 });

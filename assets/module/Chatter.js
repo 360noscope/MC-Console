@@ -1,6 +1,6 @@
 module.exports = function () {
     function minesaga(box, res) {
-        var msgData = res.data, colorMatch = {
+        const colorMatch = {
             'dark_red': '#AA0000',
             'red': '#FF5555',
             'gold': '#FFAA00',
@@ -21,13 +21,14 @@ module.exports = function () {
         if (res.extra == undefined) {
             if (res.text != '') {
                 chatBox.append('<span style="color:' + colorMatch[res['color']] + '; white-space: nowrap;">' + res.text + '</span><br>');
+                console.log(res.text);
             }
         } else {
-            var msgBlock = res.extra;
+            const msgBlock = res.extra;
             if (msgBlock.length == 1) {
-                var msgObj = msgBlock[0];
+                const msgObj = msgBlock[0];
                 if (msgObj.hasOwnProperty('extra')) {
-                    var textOnly = [], msgList = msgObj['extra'];
+                    const textOnly = [], msgList = msgObj['extra'];
                     msgList.forEach(element => {
                         if (element['text'] != '') {
                             if (element['color'] == undefined) {
@@ -42,14 +43,12 @@ module.exports = function () {
                         chatBox.append(textOnly.join(''));
                     }
                 } else {
-                    if (chatBox.length > 0) {
-                        if (msgObj != '') {
-                            chatBox.append('<span style="color:' + colorMatch[msgObj['color']] + '; white-space: nowrap;">' + msgObj['text'] + '</span><br>');
-                        }
+                    if (msgObj != '') {
+                        chatBox.append('<span style="color:' + colorMatch[msgObj['color']] + '; white-space: nowrap;">' + msgObj['text'] + '</span><br>');
                     }
                 }
             } else {
-                var textOnly = [];
+                const textOnly = [];
                 msgBlock.forEach(element => {
                     if (element['text'] != '') {
                         if (element['color'] == undefined) {
@@ -60,14 +59,40 @@ module.exports = function () {
                     }
                 });
                 textOnly.push('<br>');
-                if (chatBox.length > 0) {
-                    chatBox.append(textOnly.join(''));
-                }
+                chatBox.append(textOnly.join(''));
             }
             $(chatBox).animate({
                 scrollTop: $(chatBox).get(0).scrollHeight
-            }, 2000);
+            }, 1000);
         }
     }
-    return { minesaga: minesaga }
+
+    function catchMoney(msgData) {
+        const pattern = {
+            'payout': /Your payout: \$(\d{0,3},)?(\d{3},)?\d{0,3}/g,
+            'balance': /Balance: \$(\d{0,3},)?(\d{3},)?\d{0,3}/g
+        },
+            data = {}, moneyPattern = /\$(\d{0,3},)?(\d{3},)?\d{0,3}/g;
+        if (msgData.extra != undefined && msgData.extra.length > 1) {
+            const realMsg = msgData.extra, text = [];
+            realMsg.forEach(element => {
+                if (element['text'] != '') {
+                    text.push(element['text']);
+                }
+            });
+            if (pattern['payout'].test(text.join(''))) {
+                data['type'] = 'payout';
+                data['result'] = text.join('').match(moneyPattern);
+            } else if (pattern['balance'].test(text.join(''))) {
+                data['type'] = 'balance';
+                data['result'] = text.join('').match(moneyPattern);
+            }
+        }
+        return data;
+    }
+
+    return {
+        minesaga: minesaga,
+        catchMoney: catchMoney
+    }
 }
