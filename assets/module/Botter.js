@@ -2,8 +2,9 @@ module.exports = function (eventEmit) {
     const bots = {};
     const mineflayer = require('mineflayer');
     const chatter = require('../module/Chatter.js')();
-    const probe = require('dns');
-    const minesagaJoin = (data, done) => {
+
+    let manualLogout = false, retryConnection = false;
+    const minesagaJoin = (data) => {
         const email = data['account']['email'],
             pass = data['account']['password'],
             server = data['server'];
@@ -15,16 +16,21 @@ module.exports = function (eventEmit) {
         };
         const bot = mineflayer.createBot(serverOption);
         bot.on('error', function (err) {
-            alert('Cannot join: ' + err);
+            console.log('Cannot join: ' + err);
         });
         bot.on('kicked', function (reason, loggedIn) {
             console.log("You're kicked because " + reason);
+            eventEmit.emit('Logout', manualLogout);
         });
         bot.on('end', function () {
-            console.log('Account disconected!');
-            eventEmit.emit('Logout', '');
+            console.log('User disconected!');
+            eventEmit.emit('Logout', manualLogout);
+            if (manualLogout == false) {
+                retryConnection = true;
+            }
         });
         bot.on('login', function () {
+            retryConnection = false;
             eventEmit.emit('Login', '');
             console.log(email + ' account just connected!');
             bot.on('message', function (res) {
@@ -44,28 +50,38 @@ module.exports = function (eventEmit) {
                 });
             });
             bots[data['cardId']] = bot;
-            done();
         });
     };
 
-    const minesagaReconnect = (option, done) => {
-
+    const minesagaReconnect = (option) => {
+        let connStatus = '';
+        const checkConnection = () => {
+            connStatus = navigator.onLine ? 'online' : 'offline';
+        };
+        checkConnection();
+        console.log(connStatus);
+        if (connStatus == 'online' && retryConnection == true) {
+            console.log(option);
+        } else if (connStatus == 'offline' && retryConnection == true) {
+            console.log('internet still out');
+        }
+        return connStatus;
     };
+    $(window).on('offline', minesagaReconnect);
+    $(window).on('online', minesagaReconnect);
 
-    function minesagaReconnect(option, done) {
-        done(mineflayer.createBot(option));
-    }
 
-    function botChat(id, msg) {
+    const botChat = (id, msg) => {
         const bot = bots[id];
         bot.chat(msg);
-    }
+    };
 
-    function botDisconnect(id) {
+    const botDisconnect = (id) => {
+        manualLogout = true;
         const bot = bots[id];
         bot.end();
         delete bots[id];
-    }
+    };
 
     return {
         minesagaJoin: minesagaJoin,

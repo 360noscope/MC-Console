@@ -71,6 +71,7 @@ module.exports = function () {
     }
 
     function catchEvent(msg) {
+        //queueing pattern: You are currently position 1 in the queue for Western.
         const pattern = {
             'payout': /Your payout: \$(\d{0,3},)?(\d{3},)?\d{0,3}/g,
             'balance': /Balance: \$(\d{0,3},)?(\d{3},)?\d{0,3}/g,
