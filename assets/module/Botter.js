@@ -1,6 +1,7 @@
-module.exports = function (eventEmit, chatter) {
+module.exports = function (eventEmit) {
     const bots = {};
     const mineflayer = require('mineflayer');
+    const chatter = require('../module/Chatter.js')();
     function minesagaJoin(data, finishJoin) {
         const email = data['account']['email'],
             pass = data['account']['password'],
@@ -23,21 +24,23 @@ module.exports = function (eventEmit, chatter) {
             eventEmit.emit('Logout', '');
         });
         bot.on('login', function () {
-            eventEmit.emit('Loggedin', '');
+            eventEmit.emit('Login', '');
             console.log(email + ' account just connected!');
             bot.on('message', function (res) {
-                const eventResult = chatter.catchEvent(res);
-                if (eventResult.hasOwnProperty('type')) {
-                    if (eventResult['type'] == 'payout') {
-                        bot.chat('/bal');
-                    } else if (eventResult['type'] == 'Hub') {
-                        bot.chat('/joinqueue ' + data['realm']);
-                    } else if (eventResult['type'] == 'Inside') {
-                        bot.chat('/bal');
+                chatter.minesaga(res, function (chatData) {
+                    const eventResult = chatter.catchEvent(chatData['stripedText']);
+                    if (eventResult.hasOwnProperty('type')) {
+                        if (eventResult['type'] == 'Payout') {
+                            bot.chat('/bal');
+                        } else if (eventResult['type'] == 'Hub') {
+                            bot.chat('/joinqueue ' + data['realm']);
+                        } else if (eventResult['type'] == 'Inside') {
+                            bot.chat('/bal');
+                        }
+                        eventEmit.emit(eventResult['type'], eventResult['result']);
                     }
-                    eventEmit.emit(eventResult['type'], eventResult['result']);
-                }
-                eventEmit.emit('chatMsg', res);
+                    eventEmit.emit('chatMsg', chatData['decoratedChat']);
+                });
             });
             bots[data['cardId']] = bot;
             finishJoin();

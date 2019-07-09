@@ -39,10 +39,10 @@ module.exports = function (document, fs) {
                             $(document).find('div[id="ccList"]').append(data);
                             $(document).find('div[id="card"]').prop('id', cardID);
                             var cardContent = $(document).find('div[id="' + cardID + '"] > div > div > div > div');
-                            cardContent.find('div:nth-child(2) > select').attr('id', servSelectID);
-                            cardContent.find('div:nth-child(3) > select').attr('id', realmSelectID);
-                            cardContent.find('div:nth-child(8)').text(element);
-                            cardContent.find('div:nth-child(9)').text('18:00');
+                            cardContent.find('div.server-selector > select').attr('id', servSelectID);
+                            cardContent.find('div.realm-selector > select').attr('id', realmSelectID);
+                            cardContent.find('div.acc-email').text(element);
+                            cardContent.find('div.acc-time').text('18:00');
                             Object.keys(serverdata).forEach(function (element) {
                                 cardContent.find('select[id="' + servSelectID + '"]').append($("<option />").val(element).text(element));
                                 serverList[element] = serverdata[element];
