@@ -2,7 +2,8 @@ module.exports = function (eventEmit) {
     const bots = {};
     const mineflayer = require('mineflayer');
     const chatter = require('../module/Chatter.js')();
-    function minesagaJoin(data, finishJoin) {
+    const probe = require('dns');
+    const minesagaJoin = (data, done) => {
         const email = data['account']['email'],
             pass = data['account']['password'],
             server = data['server'];
@@ -43,9 +44,13 @@ module.exports = function (eventEmit) {
                 });
             });
             bots[data['cardId']] = bot;
-            finishJoin();
+            done();
         });
-    }
+    };
+
+    const minesagaReconnect = (option, done) => {
+
+    };
 
     function minesagaReconnect(option, done) {
         done(mineflayer.createBot(option));

@@ -129,6 +129,9 @@ $(document).on('click', 'div[id^="card-"] > div > div > div > div a.offline', fu
             cmodal.$body.find('form#chatForm #parentCardID').val(cardId);
             const chatboxPopulate = (msg) => {
                 cmodal.$body.find('#chatBox').append(msg);
+                cmodal.$body.find('#chatBox').animate({
+                    scrollTop: $(chatBox).get(0).scrollHeight
+                }, 500);
             };
             const removeChatEvent = () => {
                 botEventEmit.removeListener('chatMsg', chatboxPopulate);

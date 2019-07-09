@@ -63,9 +63,6 @@ module.exports = function () {
                 });
                 decoratedText.push('<br>');
             }
-            /*$(chatBox).animate({
-                scrollTop: $(chatBox).get(0).scrollHeight
-            }, 1000);*/
         }
         done({
             'decoratedChat': decoratedText.join(''),
