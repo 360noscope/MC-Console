@@ -105,7 +105,7 @@ module.exports = function (document, fs) {
         cardBtnSign.attr('class', 'fas fa-play');
         cardBtnText.text('Start Agent!');
         var buttonParent = cardParent.parent();
-        buttonParent.find('a:last').remove();
+        buttonParent.find('a.lConsole').remove();
     }
 
     return {

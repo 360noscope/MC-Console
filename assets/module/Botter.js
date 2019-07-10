@@ -16,7 +16,7 @@ module.exports = function (eventEmit) {
         };
         const bot = mineflayer.createBot(serverOption);
         bot.on('error', function (err) {
-            console.log('Cannot join: ' + err);
+            console.log(err);
         });
         bot.on('kicked', function (reason, loggedIn) {
             console.log("You're kicked because " + reason);
@@ -24,7 +24,7 @@ module.exports = function (eventEmit) {
         });
         bot.on('end', function () {
             console.log('User disconected!');
-            eventEmit.emit('Logout', manualLogout);
+            eventEmit.emit('Logout', { 'isManual': manualLogout });
             if (manualLogout == false) {
                 retryConnection = true;
             }
@@ -53,17 +53,22 @@ module.exports = function (eventEmit) {
         });
     };
 
-    const minesagaReconnect = (option) => {
-        let connStatus = '';
+    let userObject = {};
+    const minesagaReconnect = (data) => {
+        if (data.hasOwnProperty('connectInfo')) {
+            userObject[data.id] = data.connectInfo;
+        }
         const checkConnection = () => {
-            connStatus = navigator.onLine ? 'online' : 'offline';
+            return navigator.onLine ? 'online' : 'offline';
         };
-        checkConnection();
+        let connStatus = checkConnection();
         console.log(connStatus);
         if (connStatus == 'online' && retryConnection == true) {
-            console.log(option);
+            for (let key in userObject) {
+                console.log(userObject[key]);
+            }
         } else if (connStatus == 'offline' && retryConnection == true) {
-            console.log('internet still out');
+            console.log('offline');
         }
         return connStatus;
     };
