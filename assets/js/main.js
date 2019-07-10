@@ -66,9 +66,10 @@ const botStarter = (e) => {
         server = realParent.parents().eq(4).find('select[id^="accServer-"]').val(),
         realm = realParent.parents().eq(4).find('select[id^="accRealm-"]').val();
     let payoutCounter = 0, totalPayout = 0;
-    const data = {
-        'server': serverScreenList[server]['address'],
-        'account': selectedAccount,
+    const AccountData = {
+        'host': serverScreenList[server]['address'],
+        'email': selectedAccount['email'],
+        'password': selectedAccount['password'],
         'realm': realm,
         'cardId': cardID
     };
@@ -142,16 +143,16 @@ const botStarter = (e) => {
             $(realParent.parent().find('div.acc-avg-payout').children().get(1)).text('-');
             realParent.parents().eq(4).find('select[id^="accServer-"]').prop('disabled', false);
             realParent.parents().eq(4).find('select[id^="accRealm-"]').prop('disabled', false);
-            $(document).off('click', 'a.lConsole', callConsole);
             if (result['isManual'] == true) {
                 $(document).off('click', 'div[id^="card-"] > div > div > div > div a.online', logoutBtn);
+                $(document).off('click', 'a.lConsole', callConsole);
                 botEventEmit.removeListener('Logout', logoutMsg);
                 loader.consoleOfflineSwitch(realParent);
             } else {
-                realParent.parent().find('div.acc-status').text('Reconnect in 5 seconds');
-                setTimeout(() => {
-                    botter.minesagaReconnect({ 'id': cardID, 'connectInfo': data });
-                }, 5000);
+                realParent.parent().find('div.acc-status').text('Reconnect in 10 seconds');
+                setTimeout(function () {
+                    botter.minesagaReconnect(result['username']);
+                }, 10000);
             }
         };
 
@@ -169,7 +170,7 @@ const botStarter = (e) => {
 
         //login method up to selected server
         if (server == 'minesaga') {
-            botter.minesagaJoin(data);
+            botter.minesagaJoin(AccountData);
         }
     } else {
         alert('Cannot account because internet is down!');

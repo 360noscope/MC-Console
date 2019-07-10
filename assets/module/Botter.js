@@ -1,18 +1,14 @@
 module.exports = function (eventEmit) {
-    const bots = {};
+    const bots = {}, connectInfos = {};
     const mineflayer = require('mineflayer');
     const chatter = require('../module/Chatter.js')();
 
-    let manualLogout = false, retryConnection = false;
     const minesagaJoin = (data) => {
-        const email = data['account']['email'],
-            pass = data['account']['password'],
-            server = data['server'];
         const serverOption = {
             version: '1.8.8',
-            host: server,
-            username: email,
-            password: pass
+            host: data['host'],
+            username: data['email'],
+            password: data['password']
         };
         const bot = mineflayer.createBot(serverOption);
         bot.on('error', function (err) {
@@ -24,15 +20,17 @@ module.exports = function (eventEmit) {
         });
         bot.on('end', function () {
             console.log('User disconected!');
-            eventEmit.emit('Logout', { 'isManual': manualLogout });
-            if (manualLogout == false) {
-                retryConnection = true;
+            let isManual = false;
+            if (connectInfos.hasOwnProperty(bot.username)) {
+                isManual = false;
+            } else {
+                isManual = true;
             }
+            eventEmit.emit('Logout', { 'username': bot.username, 'isManual': isManual });
         });
         bot.on('login', function () {
-            retryConnection = false;
             eventEmit.emit('Login', '');
-            console.log(email + ' account just connected!');
+            console.log(data['email'] + ' account just connected!');
             bot.on('message', function (res) {
                 chatter.minesaga(res, function (chatData) {
                     const eventResult = chatter.catchEvent(chatData['stripedText']);
@@ -49,43 +47,48 @@ module.exports = function (eventEmit) {
                     eventEmit.emit('chatMsg', chatData['decoratedChat']);
                 });
             });
-            bots[data['cardId']] = bot;
+            bots[data['cardId']] = { 'username': bot.username, 'bot': bot };
+            const accInfo = {
+                'host': data['host'],
+                'email': data['email'],
+                'password': data['password'],
+                'realm': data['realm'],
+                'cardId': data['cardId']
+            };
+            connectInfos[bot.username] = { 'loginInfo': accInfo, 'id': data['cardId'] };
         });
     };
 
-    let userObject = {};
-    const minesagaReconnect = (data) => {
-        if (data.hasOwnProperty('connectInfo')) {
-            userObject[data.id] = data.connectInfo;
-        }
+    const minesagaReconnect = (username) => {
         const checkConnection = () => {
-            return navigator.onLine ? 'online' : 'offline';
-        };
-        let connStatus = checkConnection();
-        console.log(connStatus);
-        if (connStatus == 'online' && retryConnection == true) {
-            for (let key in userObject) {
-                console.log(userObject[key]);
+            let connStatus = navigator.onLine ? 'online' : 'offline';
+            console.log(connStatus);
+            if (connStatus == 'online') {
+                const loginInfo = connectInfos[username];
+                const id = loginInfo['id'];
+                delete bots[id];
+                minesagaJoin(loginInfo['loginInfo']);
             }
-        } else if (connStatus == 'offline' && retryConnection == true) {
-            console.log('offline');
-        }
-        return connStatus;
+        };
+        checkConnection();
+        $(window).on('offline', checkConnection);
+        $(window).on('online', checkConnection);
     };
-    $(window).on('offline', minesagaReconnect);
-    $(window).on('online', minesagaReconnect);
+
 
 
     const botChat = (id, msg) => {
-        const bot = bots[id];
+        const bot = bots[id]['bot'];
         bot.chat(msg);
     };
 
     const botDisconnect = (id) => {
         manualLogout = true;
-        const bot = bots[id];
+        const bot = bots[id]['bot'];
+        const botUsername = bot.username;
         bot.end();
         delete bots[id];
+        delete connectInfos[botUsername];
     };
 
     return {

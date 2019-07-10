@@ -66,7 +66,7 @@ module.exports = function (document, fs) {
     }
 
     function consoleModal(container, doneLoad) {
-        $.get('../html/console.html', function(data){
+        $.get('../html/console.html', function (data) {
             container.setContent(data);
             doneLoad();
         });
@@ -89,6 +89,7 @@ module.exports = function (document, fs) {
                 '<span class="icon text-white-50">' +
                 '<i class="far fa-window-maximize"></i>' +
                 '</span><span class="text">Open Console</span></a>';
+        buttonParent.find('a.lConsole').remove();
         $(consoleBtn).insertAfter(buttonParent.children().first());
     }
 
