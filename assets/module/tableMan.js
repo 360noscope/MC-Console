@@ -6,9 +6,15 @@ module.exports = function (document) {
         Database.readData('accounts', '*', (res) => {
             for (key in res) {
                 const item = res[key];
+                let editBtn = null;
+                if (item['status'] == 'online') {
+                    editBtn = '';
+                }
                 tableData.push({
                     'email': key,
-                    'created_date': item['created_date']
+                    'created_date': item['created_date'],
+                    'editBtn': editBtn,
+                    'delBtn': editBtn
                 });
             }
             if ($.fn.DataTable.isDataTable($(document).find('#accountTable'))) {
@@ -22,7 +28,9 @@ module.exports = function (document) {
                 dom: '<"row"<"col-3"l><"col-3 mt-4"><"col-6"f>>rtp',
                 columns: [
                     { data: 'email' },
-                    { data: 'created_date' }
+                    { data: 'created_date' },
+                    { data: 'editBtn' },
+                    { data: 'delBtn' }
                 ],
                 columnDefs: [
                     {
@@ -40,6 +48,7 @@ module.exports = function (document) {
             done(accountTable);
         });
     }
+
     const listServer = (done) => {
         let serverTable;
         const tableData = [];

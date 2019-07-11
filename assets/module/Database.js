@@ -20,12 +20,13 @@ module.exports = function () {
         }
     };
 
+    const dataPath = path.join(remote.app.getPath('appData'), '/mcconsole/');
+    const tableList = {
+        'accounts': 'accounts.json',
+        'servers': 'servers.json'
+    };
+
     const readData = (table, key, done) => {
-        const dataPath = path.join(remote.app.getPath('appData'), '/mcconsole/');
-        const tableList = {
-            'accounts': 'accounts.json',
-            'servers': 'servers.json'
-        };
         if (key != '*') {
             fs.readFile(path.join(dataPath, tableList[table]), 'utf8', (err, data) => {
                 if (err) {
@@ -48,12 +49,55 @@ module.exports = function () {
         }
     };
 
-    const writeData  = () => {
+    const writeData = (table, input, done) => {
+        fs.readFile(path.join(dataPath, tableList[table]), 'utf8', (err, data) => {
+            if (err) {
+                console.log(err);
+            }
+            const oldData = JSON.parse(data);
+            oldData[input['key']] = input['data'];
+            fs.writeFile(path.join(dataPath, tableList[table]), JSON.stringify(oldData), (err) => {
+                if (err) { alert(err); }
+                done();
+            });
+        });
+    };
 
+    const updateData = (table, input, done) => {
+        fs.readFile(path.join(dataPath, tableList[table]), 'utf8', (err, data) => {
+            if (err) {
+                console.log(err);
+            }
+            const oldData = JSON.parse(data);
+            for (key in input['data']) {
+                oldData[input['key']][key] = input['data'][key];
+            }
+            fs.writeFile(path.join(dataPath, tableList[table]), JSON.stringify(oldData), (err) => {
+                if (err) { alert(err); }
+                done();
+            });
+        });
+    };
+
+    const deleteData = (table, key, done) => {
+        fs.readFile(path.join(dataPath, tableList[table]), 'utf8', (err, data) => {
+            if (err) {
+                console.log(err);
+            }
+            const oldData = JSON.parse(data);
+            delete oldData[key];
+            fs.writeFile(path.join(dataPath, tableList[table]), JSON.stringify(oldData), (err) => {
+                if (err) { alert(err); }
+                done();
+            });
+        });
     };
 
     return {
         createDatabase: createDatabase,
-        readData: readData
+        readData: readData,
+        writeData: writeData,
+        updateData: updateData,
+        deleteData: deleteData
     }
 }

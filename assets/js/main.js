@@ -4,44 +4,47 @@ require('datatables.net-responsive-bs4')();
 require('datatables.net-rowgroup-bs4')();
 
 const fs = require('fs');
-const Database = require('../module/Database.js')();
+const Database = require('../module/Database')();
 const EventEmitter = require('events').EventEmitter;
-const loader = require('../module/pageLoader.js')(document, fs);
-const modal = require('../module/modalLoader.js')(document, loader, fs);
-const accounts = require('../module/Accounts.js')(document, fs);
+const loader = require('../module/pageLoader')();
 let accountTable, serverTable, accountScreenList, serverScreenList;
 
 $(document).ready(function () {
     Database.createDatabase();
 });
 
+//modal part
+const modalEvent = new EventEmitter();
+const modal = require('../module/modalLoader.js')(modalEvent);
 $(document).on('click', '#manageAccount', function (e) {
     e.preventDefault();
-    loader.manageAccount(function (res) {
+    loader.manageAccount((res) => {
         accountTable = res;
     });
 });
+//end modal part
 
-$(document).on('click', '#editAccount', function (e) {
-    e.preventDefault();
-    var selectedAcc = accountTable.row($(this).parents('tr')).data();
-    modal.accountModal(true, selectedAcc);
-});
-
-$(document).on('click', '#deleteAccount', function (e) {
-    e.preventDefault();
-    var selectedAcc = accountTable.row($(this).parents('tr')).data();
-    accounts.deleteMcAccount(selectedAcc['email'], function () {
-        loader.manageAccount(function (res) {
-            accountTable = res;
-        });
+//account event
+modalEvent.on('updateAccount', () => {
+    loader.manageAccount((res) => {
+        accountTable = res;
     });
 });
-
-$(document).on('click', '#addAccount', function (e) {
+$(document).on('click', '#addAccount', { 'action': 'new' }, function (e) {
     e.preventDefault();
-    modal.accountModal();
+    modal.accountModal(e.data.action);
 });
+$(document).on('click', '#editAccount', { 'action': 'edit' }, function (e) {
+    e.preventDefault();
+    const selectedAcc = accountTable.row($(this).parents('tr')).data();
+    modal.accountModal(e.data.action, selectedAcc.email);
+});
+$(document).on('click', '#deleteAccount', function (e) {
+    e.preventDefault();
+    const selectedAcc = accountTable.row($(this).parents('tr')).data();
+    modal.deleteAccountModal(selectedAcc.email);
+});
+//end account event
 
 $(document).on('click', '#cClient', function (e) {
     e.preventDefault();
@@ -53,7 +56,7 @@ $(document).on('click', '#cClient', function (e) {
 
 $(document).on('change', 'select[id^="accServer-"]', function (e) {
     e.preventDefault();
-    var selectorParent = $(event.target).parent().parent();
+    var selectorParent = $(e.target).parent().parent();
     $.each(serverScreenList[$(e.target).val()]['realms'], function (i, item) {
         selectorParent.find('select[id^="accRealm-"]').empty().append($("<option />").val(item).text(item));
     });
@@ -83,7 +86,7 @@ const botStarter = (e) => {
         //account card button function
         const callConsole = (e) => {
             e.preventDefault();
-            modal.consoleModal(botEventEmit, function (cmodal) {
+            modal.consoleModal(loader, (cmodal) => {
                 cmodal.$body.find('form#chatForm #parentCardID').val(cardID);
                 const chatboxPopulate = (msg) => {
                     cmodal.$body.find('#chatBox').append(msg);
@@ -153,7 +156,7 @@ const botStarter = (e) => {
                 botEventEmit.removeListener('Logout', logoutMsg);
                 loader.consoleOfflineSwitch(realParent);
             } else {
-                realParent.parent().find('div.acc-status').text('Reconnect in 10 seconds');
+                realParent.parent().find('div.acc-status').text('Will reconnect when internet is back!');
                 setTimeout(function () {
                     botter.minesagaReconnect(result['username']);
                 }, 10000);

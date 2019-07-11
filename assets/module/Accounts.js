@@ -1,13 +1,13 @@
-module.exports = function (document, fs) {
+module.exports = function () {
     const Database = require('../module/Database')();
-    const isEmptyForm = (edit) => {
-        var result = false;
-        $(document).find('form#accountForm :input').each(function () {
-            if (edit == false) {
+    const isEmptyForm = (action) => {
+        let result = false;
+        $('form#accountForm :input').each(function () {
+            if (action == 'new') {
                 if ($.trim($(this).val()) == '') {
                     result = true;
                 }
-            } else {
+            } else if (action == 'edit') {
                 if ($(this)[0].id != 'accountPass' && $(this)[0].id != 'confirmPass') {
                     if ($.trim($(this).val()) == '') {
                         result = true;
@@ -18,106 +18,92 @@ module.exports = function (document, fs) {
         return result;
     }
 
-    const isEmailExists = (done) => {
-        var result = false;
-        Database.readData('accounts', key, ()=>{
-
-        });
-        done(result);
-
-    }
-
-    function insertMcAccount(doneInsert) {
-        fs.readFile('./assets/data/accounts.json', function (err, data) {
-            if (err) { alert(err); }
-            var day = new Date();
-            var stringDay = day.getDay() + '/' + (day.getMonth() + 1) + '/' + day.getFullYear();
-            var fileData = JSON.parse(data);
-            fileData[$(document).find('#accountEmail').val()] = {
-                password: $(document).find('#accountPass').val(),
-                created_date: stringDay,
-                status: 'offline'
-            };
-            fs.writeFile('./assets/data/accounts.json', JSON.stringify(fileData), function (err) {
-                if (err) { alert(err); }
-                doneInsert();
-            });
-        });
-    }
-
-    function updateMcAccount(selectedEmail, doneUpdate) {
-        var editPass = $(document).find('#accountPass').val();
-        fs.readFile('./assets/data/accounts.json', function (err, data) {
-            if (err) { alert(err); }
-            var accountData = JSON.parse(data);
-            if (accountData[selectedEmail]['status'] != 'online') {
-                if ($.trim(editPass) != '') {
-                    accountData[selectedEmail]['password'] = editPass;
+    const isEmailExists = (action, done) => {
+        let result = false;
+        const email = $('form#accountForm input#accountEmail').val();
+        if (action == 'new') {
+            Database.readData('accounts', email, (res) => {
+                if (res != false) {
+                    result = true;
                 }
-            } else {
-                $.alert({
-                    title: 'Error!',
-                    content: "Selected account is still online!",
-                });
-            }
-            fs.writeFile('./assets/data/accounts.json', JSON.stringify(accountData), function (err) {
-                if (err) { alert(err); }
-                doneUpdate();
+                done(result);
             });
-        });
+        } else if (action == 'edit') {
+            done(result);
+        }
     }
 
-    function deleteMcAccount(selectedEmail, doneDelete) {
-        var accountBox;
-        accountBox = $.confirm({
-            title: 'Delete Account',
-            animation: 'bottom',
-            columnClass: 'col-md-6',
-            containerFluid: true,
-            content: 'Do you want to delete selected account?',
-            buttons: {
-                confirm: {
-                    text: 'OK',
-                    btnClass: 'btn btn-danger',
-                    action: function () {
-                        fs.readFile('./assets/data/accounts.json', function (err, data) {
-                            if (err) { alert(err); }
-                            var accountData = JSON.parse(data);
-                            if (accountData[selectedEmail]['status'] != 'online') {
-                                delete accountData[selectedEmail];
-                            } else {
-                                $.alert({
-                                    title: 'Error!',
-                                    content: "Selected account is still online!",
+    const writeAccountData = (action, done) => {
+        if (isEmptyForm(action)) {
+            $.alert({
+                title: 'Error!',
+                content: "There're empty field!",
+            });
+        } else {
+            isEmailExists(action, (res) => {
+                if (res) {
+                    $.alert({
+                        title: 'Error!',
+                        content: "Email is already exists!",
+                    });
+                } else {
+                    if ($('form#accountForm input#accountPass').val() != $('form#accountForm input#confirmPass').val()) {
+                        $.alert({
+                            title: 'Error!',
+                            content: "You enter different password in both password field!",
+                        });
+                    } else {
+                        const date = new Date();
+                        const stringDate = date.getDay() + '/' + (date.getMonth() + 1) + '/' + date.getFullYear();
+                        if (action == 'new') {
+                            const inputData = {
+                                'key': $('form#accountForm input#accountEmail').val(),
+                                'data': {
+                                    'password': $('form#accountForm input#accountPass').val(),
+                                    'created_date': stringDate,
+                                    'status': 'offline'
+                                }
+                            };
+                            Database.writeData('accounts', inputData, () => {
+                                done();
+                            });
+                        } else if (action == 'edit') {
+                            if ($.trim($('form#accountForm input#accountPass').val()) != '') {
+                                const inputData = {
+                                    'key': $('form#accountForm input#accountEmail').val(),
+                                    'data': {
+                                        'password': $('form#accountForm input#accountPass').val()
+                                    }
+                                };
+                                Database.updateData('accounts', inputData, () => {
+                                    done();
                                 });
                             }
-                            fs.writeFile('./assets/data/accounts.json', JSON.stringify(accountData), function (err) {
-                                if (err) { alert(err); }
-                                accountBox.close();
-                                doneDelete();
-                            });
-                        });
-                        return false;
-                    }
-                },
-                cancel: {
-                    text: 'Cancel',
-                    btnClass: 'btn btn-warning',
-                    action: function () {
-
+                            done();
+                        }
                     }
                 }
-            }
-        });
-
-
+            });
+        }
     }
 
+    const deleteAccountData = (accKey, done) => {
+        Database.readData('accounts', accKey, (res) => {
+            if (res['status'] == 'online') {
+                $.alert({
+                    title: 'Error!',
+                    content: "Account still online!",
+                });
+            } else {
+                Database.deleteData('accounts', accKey, () => {
+                    done();
+                });
+            }
+        });
+    };
+
     return {
-        isEmptyForm: isEmptyForm,
-        insertMcAccount: insertMcAccount,
-        isEmailExists: isEmailExists,
-        updateMcAccount: updateMcAccount,
-        deleteMcAccount: deleteMcAccount
+        writeAccountData: writeAccountData,
+        deleteAccountData: deleteAccountData
     }
 }
