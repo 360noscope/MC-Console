@@ -1,5 +1,6 @@
 module.exports = function (document, fs) {
-    function isEmptyForm(edit) {
+    const Database = require('../module/Database')();
+    const isEmptyForm = (edit) => {
         var result = false;
         $(document).find('form#accountForm :input').each(function () {
             if (edit == false) {
@@ -17,16 +18,13 @@ module.exports = function (document, fs) {
         return result;
     }
 
-    function isEmailExists(doneCheck) {
+    const isEmailExists = (done) => {
         var result = false;
-        fs.readFile('./assets/data/accounts.json', function (err, data) {
-            if (err) { alert(err); }
-            var fileData = JSON.parse(data);
-            if (fileData.hasOwnProperty($(document).find('#accountEmail').val())) {
-                result = true;
-            }
-            doneCheck(result);
+        Database.readData('accounts', key, ()=>{
+
         });
+        done(result);
+
     }
 
     function insertMcAccount(doneInsert) {
@@ -106,13 +104,13 @@ module.exports = function (document, fs) {
                     text: 'Cancel',
                     btnClass: 'btn btn-warning',
                     action: function () {
-    
+
                     }
                 }
             }
         });
-    
-      
+
+
     }
 
     return {

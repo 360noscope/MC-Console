@@ -4,12 +4,16 @@ require('datatables.net-responsive-bs4')();
 require('datatables.net-rowgroup-bs4')();
 
 const fs = require('fs');
+const Database = require('../module/Database.js')();
 const EventEmitter = require('events').EventEmitter;
 const loader = require('../module/pageLoader.js')(document, fs);
 const modal = require('../module/modalLoader.js')(document, loader, fs);
 const accounts = require('../module/Accounts.js')(document, fs);
-var accountTable, serverTable, accountScreenList, serverScreenList;
+let accountTable, serverTable, accountScreenList, serverScreenList;
 
+$(document).ready(function () {
+    Database.createDatabase();
+});
 
 $(document).on('click', '#manageAccount', function (e) {
     e.preventDefault();

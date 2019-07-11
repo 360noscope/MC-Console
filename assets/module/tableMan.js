@@ -1,17 +1,16 @@
-module.exports = function (document, fs) {
-    function listAccount(doneList) {
-        var accountTable, tableData = [];
-        fs.readFile('./assets/data/accounts.json', function (err, data) {
-            if (err) { console.log(err); }
-            var accountData = JSON.parse(data);
-            Object.keys(accountData).forEach(function (element) {
-                var entry_data = accountData[element];
-                var entry = {
-                    email: element,
-                    created_date: entry_data['created_date']
-                };
-                tableData.push(entry);
-            });
+module.exports = function (document) {
+    const Database = require('../module/Database.js')();
+    const listAccount = (done) => {
+        let accountTable;
+        const tableData = [];
+        Database.readData('accounts', '*', (res) => {
+            for (key in res) {
+                const item = res[key];
+                tableData.push({
+                    'email': key,
+                    'created_date': item['created_date']
+                });
+            }
             if ($.fn.DataTable.isDataTable($(document).find('#accountTable'))) {
                 $(document).find('#accountTable').DataTable().clear().destroy();
             }
@@ -38,22 +37,20 @@ module.exports = function (document, fs) {
                     }
                 ]
             });
-            doneList(accountTable);
+            done(accountTable);
         });
     }
-    function listServer(doneList) {
-        var serverTable, tableData = [];
-        fs.readFile('./assets/data/servers.json', function (err, data) {
-            if (err) { console.log(err); }
-            var serverData = JSON.parse(data);
-            Object.keys(serverData).forEach(function (element) {
-                var entry_data = serverData[element];
-                var entry = {
-                    name: element,
-                    address: entry_data['address']
-                };
-                tableData.push(entry);
-            });
+    const listServer = (done) => {
+        let serverTable;
+        const tableData = [];
+        Database.readData('servers', '*', (res) => {
+            for (key in res) {
+                const item = res[key];
+                tableData.push({
+                    'name': key,
+                    'address': item['address']
+                });
+            }
             if ($.fn.DataTable.isDataTable($(document).find('#accountTable'))) {
                 $(document).find('#serverTable').DataTable().clear().destroy();
             }
@@ -80,7 +77,7 @@ module.exports = function (document, fs) {
                     }
                 ]
             });
-            doneList(serverTable);
+            done(serverTable);
         });
     }
     return {
