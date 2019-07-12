@@ -39,18 +39,14 @@ module.exports = function () {
                     let cardCounter = 1;
                     for (accKey in accRes) {
                         $.get("../html/accountCard.html", function (data) {
-                            var cardID = 'card-' + cardCounter,
-                                servSelectID = 'accServer-' + cardCounter,
-                                realmSelectID = 'accRealm-' + cardCounter;
-                            $('div[id="ccList"]').append(data);
-                            $('div[id="card"]').prop('id', cardID);
-                            const cardContent = $('div[id="' + cardID + '"] > div > div > div > div');
-                            cardContent.find('div.server-selector > select').attr('id', servSelectID);
-                            cardContent.find('div.realm-selector > select').attr('id', realmSelectID);
+                            var cardID = 'card-' + cardCounter;
+                            $('div#ccList').append(data);
+                            $('div#card').prop('id', cardID);
+                            const cardContent = $('div#' + cardID);
                             cardContent.find('div.acc-email').text(accKey);
                             cardContent.find('div.acc-time').text('18:00');
-                            const serverSelector = cardContent.find('select[id="' + servSelectID + '"]');
-                            const realmSelector = cardContent.find('select[id="' + realmSelectID + '"]');
+                            const serverSelector = cardContent.find('select.server-selector');
+                            const realmSelector = cardContent.find('select.realm-selector');
                             for (serverKey in serverRes) {
                                 serverSelector.append($("<option />").val(serverKey).text(serverKey));
                                 serverList[serverKey] = serverRes[serverKey];
@@ -66,9 +62,9 @@ module.exports = function () {
                             };
                             const botInfo = botter.displayBotStatus(cardID);
                             if (botInfo != 'offline') {
-                                const connInfo = botter.displayBotConnectInfo(botInfo.username);
-                                displayOnlineCard(cardContent, connInfo, serverSelector, realmSelector);
-                                botInfo.chat('/bal');
+                                const connInfo = botter.displayBotConnectInfo(botInfo['bot'].username)['loginInfo'];
+                                displayOnlineCard(cardContent, connInfo);
+                                botInfo['bot'].chat('/bal');
                             }
                             cardCounter++;
                         });
@@ -84,13 +80,12 @@ module.exports = function () {
         });
     };
 
-    const displayOnlineCard = (cardContent, conInfo, serverselector, realmselector) => {
-        const childElement = cardContent.find('a.offline');
-        consoleOnlineSwitch(childElement);
-        childElement.parents().eq(4).find('select[id^="accServer-"]').prop('disabled', true);
-        childElement.parents().eq(4).find('select[id^="accRealm-"]').prop('disabled', true);
+    const displayOnlineCard = (cardContent, conInfo) => {
+        consoleOnlineSwitch(cardContent);
+        cardContent.find('select.server-selector select').val(conInfo['host']);
+        cardContent.find('select.realm-selector select').val(conInfo['realm']);
+        cardContent.find('select').prop('disabled', true);
         cardContent.find('div.acc-status').text('Stalking your chunk...');
-
     };
 
     const consoleModal = (container, doneLoad) => {
@@ -100,41 +95,27 @@ module.exports = function () {
         });
     };
 
-    const consoleOnlineSwitch = (cardParent) => {
-        var card = cardParent.parents().eq(4);
-        var cardID = card.attr('id');
-        var cardColorSel = $('#' + cardID + ' > div');
-        var button = cardParent.parent().children().first();
-        cardColorSel.attr('class', 'card border-left-success shadow h-100 py-2');
-        var cardBtnSign = button.children().first().find('i'),
-            cardBtnText = button.children().last();
-        button.removeClass('btn-success').addClass('btn-danger')
+    const consoleOnlineSwitch = (card) => {
+        $('div#' + card.attr('id') + ' > div').attr('class', 'card border-left-success shadow h-100 py-2');
+        card.find('i.actionbtnIcon').attr('class', 'fas fa-stop actionBtnIcon');
+        card.find('span.actionBtnText').text('Stop Agent!');
+        card.find('a.actionBtn').removeClass('btn-success').addClass('btn-danger')
             .removeClass('offline').addClass('online');
-        cardBtnSign.attr('class', 'fas fa-stop');
-        cardBtnText.text('Stop Agent!');
-        var buttonParent = cardParent.parent(),
-            consoleBtn = '<a href="#" class="btn btn-info btn-icon-split mb-3 lConsole">' +
-                '<span class="icon text-white-50">' +
-                '<i class="far fa-window-maximize"></i>' +
-                '</span><span class="text">Open Console</span></a>';
-        buttonParent.find('a.lConsole').remove();
-        $(consoleBtn).insertAfter(buttonParent.children().first());
+        card.find('a.lConsole').remove();
+        const consoleBtn = '<a href="#" class="btn btn-info btn-icon-split mb-3 lConsole">' +
+            '<span class="icon text-white-50">' +
+            '<i class="far fa-window-maximize"></i>' +
+            '</span><span class="text">Open Console</span></a>';
+        $(consoleBtn).insertAfter(card.find('a.actionBtn'));
     };
 
-    const consoleOfflineSwitch = (cardParent) => {
-        var card = cardParent.parents().eq(4);
-        var cardID = card.attr('id');
-        var cardColorSel = $('#' + cardID + ' > div');
-        var button = cardParent.parent().children().first();
-        cardColorSel.attr('class', 'card border-left-danger shadow h-100 py-2');
-        var cardBtnSign = button.children().first().find('i'),
-            cardBtnText = button.children().last();
-        button.removeClass('btn-danger').addClass('btn-success')
+    const consoleOfflineSwitch = (card) => {
+        $('#' + card.attr('id') + ' > div').attr('class', 'card border-left-danger shadow h-100 py-2');
+        card.find('a.actionBtn').removeClass('btn-danger').addClass('btn-success')
             .removeClass('online').addClass('offline');
-        cardBtnSign.attr('class', 'fas fa-play');
-        cardBtnText.text('Start Agent!');
-        var buttonParent = cardParent.parent();
-        buttonParent.find('a.lConsole').remove();
+        card.find('i.actionbtnIcon').attr('class', 'fas fa-play actionBtnIcon');
+        card.find('span.actionBtnText').text('Start Agent!');
+        card.find('a.lConsole').remove();
     };
 
     return {

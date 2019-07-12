@@ -60,33 +60,31 @@ $(document).on('click', '#addServer', { 'action': 'new' }, (e) => {
 const botEventEmit = new EventEmitter();
 const botter = require('../module/Botter.js')(botEventEmit);
 $(document).on('click', '#cClient', (e) => {
-    e.preventDefault();
     loader.manageConsole(botter, (res) => {
         accountScreenList = res['accList'];
         serverScreenList = res['servList'];
     });
+    return false;
 });
 $(document).on('change', 'select[id^="accServer-"]', (e) => {
-    e.preventDefault();
     var selectorParent = $(e.target).parent().parent();
     $.each(serverScreenList[$(e.target).val()]['realms'], function (i, item) {
         selectorParent.find('select[id^="accRealm-"]').empty().append($("<option />").val(item).text(item));
     });
+    return false;
 });
-$(document).on('click', 'div[id^="card-"] > div > div > div > div a.offline', { 'element': 'div[id^="card-"] > div > div > div > div a.offline' }, (e) => {
-    e.preventDefault();
-    const realParent = $(e.data.element);
-    const cardID = realParent.parents().eq(4).attr('id');
-    const selectedAccount = accountScreenList[cardID],
-        server = realParent.parents().eq(4).find('select[id^="accServer-"]').val(),
-        realm = realParent.parents().eq(4).find('select[id^="accRealm-"]').val();
+$(document).on('click', 'a.offline', (e) => {
+    const cardParent = $(e.target).parents().eq(5);
+    const selectedAccount = accountScreenList[cardParent.attr('id')],
+        server = cardParent.find('select.server-selector').val(),
+        realm = cardParent.find('select.realm-selector').val();
     let payoutCounter = 0, totalPayout = 0;
     const AccountData = {
         'host': serverScreenList[server]['address'],
         'email': selectedAccount['email'],
         'password': selectedAccount['password'],
         'realm': realm,
-        'cardId': cardID
+        'cardId': cardParent.attr('id')
     };
 
     const internet = navigator.onLine ? 'online' : 'offline';
@@ -95,32 +93,32 @@ $(document).on('click', 'div[id^="card-"] > div > div > div > div a.offline', { 
         const callConsole = (e) => {
             e.preventDefault();
             modal.consoleModal(loader, (cmodal) => {
-                cmodal.$body.find('form#chatForm #parentCardID').val(cardID);
+                const chatSendBtn = (e) => {
+                    if (cmodal.$body.find('form#chatForm #msgInput').val() != '') {
+                        botter.botChat(e.data.id, cmodal.$body.find('form#chatForm #msgInput').val());
+                        cmodal.$body.find('form#chatForm #msgInput').val('');
+                    }
+                    return false;
+                };
                 const chatboxPopulate = (msg) => {
-                    cmodal.$body.find('#chatBox').append(msg);
+                    cmodal.$body.find('#chatBox').append(msg['msg']);
                     cmodal.$body.find('#chatBox').animate({
                         scrollTop: $(cmodal.$body.find('#chatBox')).get(0).scrollHeight
                     }, 500);
-                };
-                const chatSendBtn = (e) => {
-                    e.preventDefault();
-                    if (cmodal.$body.find('form#chatForm #msgInput').val() != '') {
-                        botter.botChat(cardID, cmodal.$body.find('form#chatForm #msgInput').val());
-                        cmodal.$body.find('form#chatForm #msgInput').val('');
-                    }
+                    $(document).off('submit', chatSendBtn)
+                        .on('submit', 'form#chatForm', { 'id': msg['card'] }, chatSendBtn);
                 };
                 const removeChatEvent = () => {
                     botEventEmit.removeListener('chatMsg', chatboxPopulate);
-                    $(document).off('submit', 'form[id^="chatForm"]', chatSendBtn);
+                    $(document).off('submit', 'form#chatForm', chatSendBtn);
                 };
-                $(document).on('submit', 'form[id^="chatForm"]', chatSendBtn);
                 botEventEmit.on('chatMsg', chatboxPopulate);
                 botEventEmit.on('consoleClose', removeChatEvent);
             });
         };
         const logoutBtn = (e) => {
             e.preventDefault();
-            botter.botDisconnect(cardID);
+            botter.botDisconnect(cardParent.attr('id'));
             botEventEmit.removeListener('Payout', payoutMsg);
             botEventEmit.removeListener('Balance', balanceMsg);
             botEventEmit.removeListener('Login', loginMsg);
@@ -130,39 +128,38 @@ $(document).on('click', 'div[id^="card-"] > div > div > div > div a.offline', { 
 
         //bot event function
         const payoutMsg = (msg) => {
-            $($('div#' + msg['card']).parent().find('div.acc-payout').children().get(1)).text(msg['eventResult']);
+            $('div#' + msg['card']).find('label.acc-payout').text(msg['eventResult']);
             payoutCounter++;
             totalPayout += parseInt(msg['eventResult'].substring(1).replace(/\,/g, ''), 10);
             const avgPayout = (totalPayout / payoutCounter).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-            $($('div#' + msg['card']).parent().find('div.acc-avg-payout').children().get(1)).text('$' + avgPayout);
+            $('div#' + msg['card']).find('label.acc-avg-payout').text('$' + avgPayout);
         };
         const balanceMsg = (msg) => {
-            $($('div#' + msg['card']).parent().find('div.acc-balance').children().get(1)).text(msg['eventResult']);
+            $('div#' + msg['card']).find('label.acc-balance').text(msg['eventResult']);
         };
         const loginMsg = (msg) => {
-            $('div#' + msg['card']).parent().find('div.acc-status').text('Waiting in hub...');
-            $('div#' + msg['card']).parents().eq(4).find('select[id^="accServer-"]').prop('disabled', true);
-            $('div#' + msg['card']).parents().eq(4).find('select[id^="accRealm-"]').prop('disabled', true);
+            console.log('account just connected!');
+            $('div#' + msg['card']).find('div.acc-status').text('Waiting in hub...');
+            $('div#' + msg['card']).find('select').prop('disabled', true);
         };
         const hubMsg = (msg) => {
-            loader.consoleOnlineSwitch($('div#' + msg['card']).find('a.offline'));
-            $('div#' + msg['card']).parent().find('div.acc-status').text('Queueing on ' + realm + '...');
+            loader.consoleOnlineSwitch($('div#' + msg['card']));
+            $('div#' + msg['card']).find('div.acc-status').text('Queueing on ' + realm + '...');
         };
         const insideMsg = (msg) => {
-            $('div#' + msg['card']).parent().find('div.acc-status').text('Stalking your chunk...');
+            $('div#' + msg['card']).find('div.acc-status').text('Stalking your chunk...');
         };
         const logoutMsg = (result) => {
-            $('div#' + result['card']).parent().find('div.acc-status').text('');
-            $($('div#' + result['card']).parent().find('div.acc-balance').children().get(1)).text('-');
-            $($('div#' + result['card']).parent().find('div.acc-payout').children().get(1)).text('-');
-            $($('div#' + result['card']).parent().find('div.acc-avg-payout').children().get(1)).text('-');
-            $('div#' + result['card']).parents().eq(4).find('select[id^="accServer-"]').prop('disabled', false);
-            $('div#' + result['card']).parents().eq(4).find('select[id^="accRealm-"]').prop('disabled', false);
+            $('div#' + result['card']).find('div.acc-status').text('');
+            $('div#' + result['card']).find('label.acc-balance').text('-');
+            $('div#' + result['card']).find('label.acc-payout').text('-');
+            $('div#' + result['card']).find('label.acc-avg-payout').text('-');
+            $('div#' + result['card']).find('select').prop('disabled', false);
             if (result['isManual'] == true) {
                 $(document).off('click', 'div[id^="card-"] > div > div > div > div a.online', logoutBtn);
                 $(document).off('click', 'a.lConsole', callConsole);
                 botEventEmit.removeListener('Logout', logoutMsg);
-                loader.consoleOfflineSwitch($('div#' + result['card']).find('a.online'));
+                loader.consoleOfflineSwitch($('div#' + result['card']));
             } else {
                 $('div#' + result['card']).parent().find('div.acc-status').text('Will reconnect when internet is back!');
                 setTimeout(function () {
@@ -181,7 +178,7 @@ $(document).on('click', 'div[id^="card-"] > div > div > div > div a.offline', { 
 
         //account card button listener binding
         $(document).on('click', 'a.lConsole', callConsole);
-        $(document).on('click', 'div[id^="card-"] > div > div > div > div a.online', logoutBtn);
+        $(document).on('click', 'a.online', logoutBtn);
 
         //login method up to selected server
         if (server == 'minesaga') {
@@ -190,5 +187,6 @@ $(document).on('click', 'div[id^="card-"] > div > div > div > div a.offline', { 
     } else {
         alert('Cannot account because internet is down!');
     }
+    return false;
 });
 //end botting part
