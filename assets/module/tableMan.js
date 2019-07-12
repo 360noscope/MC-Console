@@ -50,7 +50,6 @@ module.exports = function () {
     }
 
     const listServer = (done) => {
-        let serverTable;
         const tableData = [];
         Database.readData('servers', '*', (res) => {
             for (key in res) {
@@ -63,7 +62,7 @@ module.exports = function () {
             if ($.fn.DataTable.isDataTable($('table#accountTable'))) {
                 $('table#serverTable').DataTable().clear().destroy();
             }
-            serverTable = $('table#serverTable').DataTable({
+            let serverTable = $('table#serverTable').DataTable({
                 data: tableData,
                 info: false,
                 processing: true,

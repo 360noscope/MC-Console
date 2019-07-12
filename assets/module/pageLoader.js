@@ -24,6 +24,13 @@ module.exports = function () {
         });
     }
 
+    const serverForm = (container, done) => {
+        $.get('../html/serverForm.html', function (data) {
+            container.setContent(data);
+            done();
+        });
+    }
+
     const manageConsole = (done) => {
         const accountList = {}, serverList = {};
         $('#page-content').load('../html/clientConsole.html', () => {
@@ -56,6 +63,11 @@ module.exports = function () {
                                 status: accRes[accKey]['status']
                             };
                             cardCounter++;
+                        });
+                    }
+                    if (Object.keys(accRes).length === 0 && accRes.constructor === Object) {
+                        $.get('../html/emptyCC.html', function (data) {
+                            $('div[id="ccList"]').append(data);
                         });
                     }
                     done({ 'accList': accountList, 'servList': serverList });
@@ -117,6 +129,7 @@ module.exports = function () {
         manageConsole: manageConsole,
         consoleModal: consoleModal,
         consoleOnlineSwitch: consoleOnlineSwitch,
-        consoleOfflineSwitch: consoleOfflineSwitch
+        consoleOfflineSwitch: consoleOfflineSwitch,
+        serverForm: serverForm
     }
 }

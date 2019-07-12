@@ -3,9 +3,9 @@ module.exports = function () {
     const path = require('path');
     const { remote } = require('electron');
 
+    const dataPath = path.join(remote.app.getPath('appData'), '/mcconsole/');
     const createDatabase = () => {
         //Creating database when first launching app
-        const dataPath = path.join(remote.app.getPath('appData'), '/mcconsole/');
         const pathList = {
             'accounts': path.join(dataPath, '/accounts.json'),
             'servers': path.join(dataPath, '/servers.json')
@@ -15,12 +15,27 @@ module.exports = function () {
         }
         for (key in pathList) {
             if (!fs.existsSync(pathList[key])) {
-                fs.writeFileSync(pathList[key], JSON.stringify({}));
+                if (key == 'servers') {
+                    const westernPromo = {}
+                    westernPromo["minesaga"] = {
+                        "address": "minesaga.org",
+                        "port": "",
+                        "realms": [
+                            "western",
+                            "space",
+                            "mystic",
+                            "jurassic",
+                            "kingdom"
+                        ]
+                    };
+                    fs.writeFileSync(pathList[key], JSON.stringify(westernPromo));
+                } else {
+                    fs.writeFileSync(pathList[key], JSON.stringify({}));
+                }
             }
         }
     };
 
-    const dataPath = path.join(remote.app.getPath('appData'), '/mcconsole/');
     const tableList = {
         'accounts': 'accounts.json',
         'servers': 'servers.json'

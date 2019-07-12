@@ -32,12 +32,12 @@ modalEvent.on('updateAccount', () => {
 });
 $(document).on('click', '#addAccount', { 'action': 'new' }, function (e) {
     e.preventDefault();
-    modal.accountModal(e.data.action);
+    modal.accountModal(e.data.action, null, loader);
 });
 $(document).on('click', '#editAccount', { 'action': 'edit' }, function (e) {
     e.preventDefault();
     const selectedAcc = accountTable.row($(this).parents('tr')).data();
-    modal.accountModal(e.data.action, selectedAcc.email);
+    modal.accountModal(e.data.action, selectedAcc.email, loader);
 });
 $(document).on('click', '#deleteAccount', function (e) {
     e.preventDefault();
@@ -46,26 +46,34 @@ $(document).on('click', '#deleteAccount', function (e) {
 });
 //end account event
 
-$(document).on('click', '#cClient', function (e) {
+$(document).on('click', '#manageServer', (e) => {
     e.preventDefault();
-    loader.manageConsole(function (res) {
+    loader.manageServer((res) => {
+        serverTable = res;
+    });
+});
+$(document).on('click', '#addServer', { 'action': 'new' }, (e) => {
+    modal.serverModal(e.data.action, null, loader);
+});
+
+//Botting part
+const botEventEmit = new EventEmitter();
+const botter = require('../module/Botter.js')(botEventEmit);
+$(document).on('click', '#cClient', (e) => {
+    e.preventDefault();
+    loader.manageConsole((res) => {
         accountScreenList = res['accList'];
         serverScreenList = res['servList'];
     });
 });
-
-$(document).on('change', 'select[id^="accServer-"]', function (e) {
+$(document).on('change', 'select[id^="accServer-"]', (e) => {
     e.preventDefault();
     var selectorParent = $(e.target).parent().parent();
     $.each(serverScreenList[$(e.target).val()]['realms'], function (i, item) {
         selectorParent.find('select[id^="accRealm-"]').empty().append($("<option />").val(item).text(item));
     });
 });
-
-//Botting part
-const botEventEmit = new EventEmitter();
-const botter = require('../module/Botter.js')(botEventEmit);
-const botStarter = (e) => {
+$(document).on('click', 'div[id^="card-"] > div > div > div > div a.offline', { 'element': 'div[id^="card-"] > div > div > div > div a.offline' }, (e) => {
     e.preventDefault();
     const realParent = $(e.data.element);
     const cardID = realParent.parents().eq(4).attr('id');
@@ -182,13 +190,5 @@ const botStarter = (e) => {
     } else {
         alert('Cannot account because internet is down!');
     }
-};
-$(document).on('click', 'div[id^="card-"] > div > div > div > div a.offline', { 'element': 'div[id^="card-"] > div > div > div > div a.offline' }, botStarter);
-//end botting part
-
-$(document).on('click', '#manageServer', function (e) {
-    e.preventDefault();
-    loader.manageServer(function (res) {
-        serverTable = res;
-    });
 });
+//end botting part

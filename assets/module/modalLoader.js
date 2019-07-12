@@ -1,6 +1,6 @@
 module.exports = function (eventEmit) {
     const accounts = require('./Accounts.js')();
-    const accountModal = (action, email) => {
+    const accountModal = (action, email, loader) => {
         let boxTitle = 'Add new minecraft account';
         if (action == 'edit') {
             boxTitle = 'Update account password';
@@ -74,6 +74,46 @@ module.exports = function (eventEmit) {
         });
     }
 
+    const serverModal = (action, editData, loader) => {
+        let boxTitle = 'Add new server';
+        if (action == 'edit') {
+            boxTitle = 'Update server';
+        }
+        const serverBox = $.confirm({
+            title: boxTitle,
+            animation: 'bottom',
+            columnClass: 'col-md-6',
+            containerFluid: true,
+            buttons: {
+                confirm: {
+                    text: 'Save',
+                    btnClass: 'btn btn-success',
+                    action: () => {
+
+                        return false;
+                    }
+                },
+                cancel: {
+                    text: 'Cancel',
+                    btnClass: 'btn btn-danger',
+                    action: () => {
+                    }
+                }
+            },
+            onOpenBefore: () => {
+                serverBox.showLoading();
+            },
+            onContentReady: () => {
+                loader.serverForm(serverBox, () => {
+                    if (action == 'edit') {
+
+                    }
+                    serverBox.hideLoading();
+                });
+            }
+        });
+    }
+
     const consoleModal = (loader, done) => {
         const consoleBox = $.confirm({
             title: 'Console',
@@ -113,6 +153,7 @@ module.exports = function (eventEmit) {
     return {
         accountModal: accountModal,
         deleteAccountModal: deleteAccountModal,
-        consoleModal: consoleModal
+        consoleModal: consoleModal,
+        serverModal: serverModal
     }
 }
