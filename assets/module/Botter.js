@@ -75,8 +75,6 @@ module.exports = function (eventEmit) {
         $(window).on('online', checkConnection);
     };
 
-
-
     const botChat = (id, msg) => {
         const bot = bots[id]['bot'];
         bot.chat(msg);
