@@ -31,7 +31,7 @@ module.exports = function () {
         });
     }
 
-    const manageConsole = (done) => {
+    const manageConsole = (botter, done) => {
         const accountList = {}, serverList = {};
         $('#page-content').load('../html/clientConsole.html', () => {
             Database.readData('accounts', '*', (accRes) => {
@@ -49,19 +49,27 @@ module.exports = function () {
                             cardContent.find('div.realm-selector > select').attr('id', realmSelectID);
                             cardContent.find('div.acc-email').text(accKey);
                             cardContent.find('div.acc-time').text('18:00');
+                            const serverSelector = cardContent.find('select[id="' + servSelectID + '"]');
+                            const realmSelector = cardContent.find('select[id="' + realmSelectID + '"]');
                             for (serverKey in serverRes) {
-                                cardContent.find('select[id="' + servSelectID + '"]').append($("<option />").val(serverKey).text(serverKey));
+                                serverSelector.append($("<option />").val(serverKey).text(serverKey));
                                 serverList[serverKey] = serverRes[serverKey];
                             }
-                            const selectedServ = cardContent.find('select[id="' + servSelectID + '"]').val();
+                            const selectedServ = serverSelector.val();
                             $.each(serverRes[selectedServ]['realms'], function (i, item) {
-                                cardContent.find('select[id="' + realmSelectID + '"]').append($("<option />").val(item).text(item));
+                                realmSelector.append($("<option />").val(item).text(item));
                             });
                             accountList[cardID] = {
                                 email: accKey,
                                 password: accRes[accKey]['password'],
                                 status: accRes[accKey]['status']
                             };
+                            const botInfo = botter.displayBotStatus(cardID);
+                            if (botInfo != 'offline') {
+                                const connInfo = botter.displayBotConnectInfo(botInfo.username);
+                                displayOnlineCard(cardContent, connInfo, serverSelector, realmSelector);
+                                botInfo.chat('/bal');
+                            }
                             cardCounter++;
                         });
                     }
@@ -73,17 +81,24 @@ module.exports = function () {
                     done({ 'accList': accountList, 'servList': serverList });
                 });
             });
-
         });
-    }
+    };
 
+    const displayOnlineCard = (cardContent, conInfo, serverselector, realmselector) => {
+        const childElement = cardContent.find('a.offline');
+        consoleOnlineSwitch(childElement);
+        childElement.parents().eq(4).find('select[id^="accServer-"]').prop('disabled', true);
+        childElement.parents().eq(4).find('select[id^="accRealm-"]').prop('disabled', true);
+        cardContent.find('div.acc-status').text('Stalking your chunk...');
+
+    };
 
     const consoleModal = (container, doneLoad) => {
         $.get('../html/console.html', function (data) {
             container.setContent(data);
             doneLoad();
         });
-    }
+    };
 
     const consoleOnlineSwitch = (cardParent) => {
         var card = cardParent.parents().eq(4);
@@ -104,7 +119,7 @@ module.exports = function () {
                 '</span><span class="text">Open Console</span></a>';
         buttonParent.find('a.lConsole').remove();
         $(consoleBtn).insertAfter(buttonParent.children().first());
-    }
+    };
 
     const consoleOfflineSwitch = (cardParent) => {
         var card = cardParent.parents().eq(4);
@@ -120,7 +135,7 @@ module.exports = function () {
         cardBtnText.text('Start Agent!');
         var buttonParent = cardParent.parent();
         buttonParent.find('a.lConsole').remove();
-    }
+    };
 
     return {
         manageAccount: manageAccount,

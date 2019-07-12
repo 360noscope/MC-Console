@@ -26,7 +26,7 @@ module.exports = function (eventEmit) {
             } else {
                 isManual = true;
             }
-            eventEmit.emit('Logout', { 'username': bot.username, 'isManual': isManual });
+            eventEmit.emit('Logout', { 'username': bot.username, 'isManual': isManual, 'card': data['cardId'] });
         });
         bot.on('login', function () {
             eventEmit.emit('Login', '');
@@ -42,7 +42,7 @@ module.exports = function (eventEmit) {
                         } else if (eventResult['type'] == 'Inside') {
                             bot.chat('/bal');
                         }
-                        eventEmit.emit(eventResult['type'], eventResult['result']);
+                        eventEmit.emit(eventResult['type'], { 'card': data['cardId'], 'eventResult': eventResult['result'] });
                     }
                     eventEmit.emit('chatMsg', chatData['decoratedChat']);
                 });
@@ -89,10 +89,24 @@ module.exports = function (eventEmit) {
         delete connectInfos[botUsername];
     };
 
+    const displayBotStatus = (key) => {
+        let result = 'offline';
+        if (bots.hasOwnProperty(key)) {
+            result = bots[key];
+        }
+        return result;
+    };
+
+    const displayBotConnectInfo = (username) => {
+        return connectInfos[username];
+    };
+
     return {
         minesagaJoin: minesagaJoin,
         minesagaReconnect: minesagaReconnect,
         botChat: botChat,
-        botDisconnect: botDisconnect
+        botDisconnect: botDisconnect,
+        displayBotStatus: displayBotStatus,
+        displayBotConnectInfo: displayBotConnectInfo
     }
 }

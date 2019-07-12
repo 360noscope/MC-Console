@@ -86,7 +86,7 @@ module.exports = function () {
             });
         }
     }
-
+    //https://www.flaticon.com/authors/smashicons icon credit
     const deleteAccountData = (accKey, done) => {
         Database.readData('accounts', accKey, (res) => {
             if (res['status'] == 'online') {

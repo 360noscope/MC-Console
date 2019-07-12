@@ -61,7 +61,7 @@ const botEventEmit = new EventEmitter();
 const botter = require('../module/Botter.js')(botEventEmit);
 $(document).on('click', '#cClient', (e) => {
     e.preventDefault();
-    loader.manageConsole((res) => {
+    loader.manageConsole(botter, (res) => {
         accountScreenList = res['accList'];
         serverScreenList = res['servList'];
     });
@@ -130,41 +130,41 @@ $(document).on('click', 'div[id^="card-"] > div > div > div > div a.offline', { 
 
         //bot event function
         const payoutMsg = (msg) => {
-            $(realParent.parent().find('div.acc-payout').children().get(1)).text(msg);
+            $($('div#' + msg['card']).parent().find('div.acc-payout').children().get(1)).text(msg['eventResult']);
             payoutCounter++;
-            totalPayout += parseInt(msg.substring(1).replace(/\,/g, ''), 10);
+            totalPayout += parseInt(msg['eventResult'].substring(1).replace(/\,/g, ''), 10);
             const avgPayout = (totalPayout / payoutCounter).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-            $(realParent.parent().find('div.acc-avg-payout').children().get(1)).text('$' + avgPayout);
+            $($('div#' + msg['card']).parent().find('div.acc-avg-payout').children().get(1)).text('$' + avgPayout);
         };
         const balanceMsg = (msg) => {
-            $(realParent.parent().find('div.acc-balance').children().get(1)).text(msg);
+            $($('div#' + msg['card']).parent().find('div.acc-balance').children().get(1)).text(msg['eventResult']);
         };
-        const loginMsg = () => {
-            realParent.parent().find('div.acc-status').text('Waiting in hub...');
-            realParent.parents().eq(4).find('select[id^="accServer-"]').prop('disabled', true);
-            realParent.parents().eq(4).find('select[id^="accRealm-"]').prop('disabled', true);
+        const loginMsg = (msg) => {
+            $('div#' + msg['card']).parent().find('div.acc-status').text('Waiting in hub...');
+            $('div#' + msg['card']).parents().eq(4).find('select[id^="accServer-"]').prop('disabled', true);
+            $('div#' + msg['card']).parents().eq(4).find('select[id^="accRealm-"]').prop('disabled', true);
         };
-        const hubMsg = () => {
-            loader.consoleOnlineSwitch(realParent);
-            realParent.parent().find('div.acc-status').text('Queueing on ' + realm + '...');
+        const hubMsg = (msg) => {
+            loader.consoleOnlineSwitch($('div#' + msg['card']).find('a.offline'));
+            $('div#' + msg['card']).parent().find('div.acc-status').text('Queueing on ' + realm + '...');
         };
-        const insideMsg = () => {
-            realParent.parent().find('div.acc-status').text('Stalking your chunk...');
+        const insideMsg = (msg) => {
+            $('div#' + msg['card']).parent().find('div.acc-status').text('Stalking your chunk...');
         };
         const logoutMsg = (result) => {
-            realParent.parent().find('div.acc-status').text('');
-            $(realParent.parent().find('div.acc-balance').children().get(1)).text('-');
-            $(realParent.parent().find('div.acc-payout').children().get(1)).text('-');
-            $(realParent.parent().find('div.acc-avg-payout').children().get(1)).text('-');
-            realParent.parents().eq(4).find('select[id^="accServer-"]').prop('disabled', false);
-            realParent.parents().eq(4).find('select[id^="accRealm-"]').prop('disabled', false);
+            $('div#' + result['card']).parent().find('div.acc-status').text('');
+            $($('div#' + result['card']).parent().find('div.acc-balance').children().get(1)).text('-');
+            $($('div#' + result['card']).parent().find('div.acc-payout').children().get(1)).text('-');
+            $($('div#' + result['card']).parent().find('div.acc-avg-payout').children().get(1)).text('-');
+            $('div#' + result['card']).parents().eq(4).find('select[id^="accServer-"]').prop('disabled', false);
+            $('div#' + result['card']).parents().eq(4).find('select[id^="accRealm-"]').prop('disabled', false);
             if (result['isManual'] == true) {
                 $(document).off('click', 'div[id^="card-"] > div > div > div > div a.online', logoutBtn);
                 $(document).off('click', 'a.lConsole', callConsole);
                 botEventEmit.removeListener('Logout', logoutMsg);
-                loader.consoleOfflineSwitch(realParent);
+                loader.consoleOfflineSwitch($('div#' + result['card']).find('a.online'));
             } else {
-                realParent.parent().find('div.acc-status').text('Will reconnect when internet is back!');
+                $('div#' + result['card']).parent().find('div.acc-status').text('Will reconnect when internet is back!');
                 setTimeout(function () {
                     botter.minesagaReconnect(result['username']);
                 }, 10000);
