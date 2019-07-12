@@ -1,4 +1,4 @@
-module.exports = function (document) {
+module.exports = function () {
     const Database = require('../module/Database.js')();
     const listAccount = (done) => {
         let accountTable;
@@ -17,10 +17,10 @@ module.exports = function (document) {
                     'delBtn': editBtn
                 });
             }
-            if ($.fn.DataTable.isDataTable($(document).find('#accountTable'))) {
-                $(document).find('#accountTable').DataTable().clear().destroy();
+            if ($.fn.DataTable.isDataTable($('table#accountTable'))) {
+                $('table#accountTable').DataTable().clear().destroy();
             }
-            accountTable = $(document).find('#accountTable').DataTable({
+            accountTable = $('table#accountTable').DataTable({
                 data: tableData,
                 info: false,
                 processing: true,
@@ -60,10 +60,10 @@ module.exports = function (document) {
                     'address': item['address']
                 });
             }
-            if ($.fn.DataTable.isDataTable($(document).find('#accountTable'))) {
-                $(document).find('#serverTable').DataTable().clear().destroy();
+            if ($.fn.DataTable.isDataTable($('table#accountTable'))) {
+                $('table#serverTable').DataTable().clear().destroy();
             }
-            serverTable = $(document).find('#serverTable').DataTable({
+            serverTable = $('table#serverTable').DataTable({
                 data: tableData,
                 info: false,
                 processing: true,
