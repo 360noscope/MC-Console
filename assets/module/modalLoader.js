@@ -114,7 +114,7 @@ module.exports = function (eventEmit) {
         });
     }
 
-    const consoleModal = (loader, done) => {
+    const consoleModal = (loader, cardId, done) => {
         const consoleBox = $.confirm({
             title: 'Console',
             animation: 'bottom',
@@ -144,6 +144,7 @@ module.exports = function (eventEmit) {
             },
             onContentReady: function () {
                 loader.consoleModal(consoleBox, function () {
+                    consoleBox.$body.find('form#chatForm input#parentID').val(cardId);
                     done(consoleBox);
                 });
             }

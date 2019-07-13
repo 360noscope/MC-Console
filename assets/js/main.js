@@ -59,6 +59,7 @@ $(document).on('click', '#addServer', { 'action': 'new' }, (e) => {
 //Botting part
 const botEventEmit = new EventEmitter();
 const botter = require('../module/Botter.js')(botEventEmit);
+const botCardPair = {};
 $(document).on('click', '#cClient', (e) => {
     loader.manageConsole(botter, (res) => {
         accountScreenList = res['accList'];
@@ -93,6 +94,8 @@ $(document).on('click', 'a.offline', (e) => {
         const callConsole = (e) => {
             e.preventDefault();
             modal.consoleModal(loader, (cmodal) => {
+                const parentId = cmodal.$body.find('form#chatForm input#parentID').val();
+                const msgDestination = Object.keys(botCardPair).find(key => botCardPair[key] === parentId);
                 const chatSendBtn = (e) => {
                     if (cmodal.$body.find('form#chatForm #msgInput').val() != '') {
                         botter.botChat(e.data.id, cmodal.$body.find('form#chatForm #msgInput').val());
@@ -100,13 +103,13 @@ $(document).on('click', 'a.offline', (e) => {
                     }
                     return false;
                 };
+                $(document).off('submit', 'form#chatForm', chatSendBtn)
+                    .on('submit', 'form#chatForm', { 'name': msgDestination }, chatSendBtn);
                 const chatboxPopulate = (msg) => {
-                    cmodal.$body.find('#chatBox').append(msg['msg']);
+                    cmodal.$body.find('#chatBox').append(msg);
                     cmodal.$body.find('#chatBox').animate({
                         scrollTop: $(cmodal.$body.find('#chatBox')).get(0).scrollHeight
                     }, 500);
-                    $(document).off('submit', chatSendBtn)
-                        .on('submit', 'form#chatForm', { 'id': msg['card'] }, chatSendBtn);
                 };
                 const removeChatEvent = () => {
                     botEventEmit.removeListener('chatMsg', chatboxPopulate);
@@ -118,7 +121,8 @@ $(document).on('click', 'a.offline', (e) => {
         };
         const logoutBtn = (e) => {
             e.preventDefault();
-            botter.botDisconnect(cardParent.attr('id'));
+            const selectedBot = Object.keys(botCardPair).find(key => botCardPair[key] === cardParent.attr('id'));
+            botter.botDisconnect(selectedBot);
             botEventEmit.removeListener('Payout', payoutMsg);
             botEventEmit.removeListener('Balance', balanceMsg);
             botEventEmit.removeListener('Login', loginMsg);
@@ -128,40 +132,48 @@ $(document).on('click', 'a.offline', (e) => {
 
         //bot event function
         const payoutMsg = (msg) => {
-            $('div#' + msg['card']).find('label.acc-payout').text(msg['eventResult']);
+            const botCard = $('div#' + botCardPair[msg['name']]);
+            botCard.find('label.acc-payout').text(msg['eventResult']);
             payoutCounter++;
             totalPayout += parseInt(msg['eventResult'].substring(1).replace(/\,/g, ''), 10);
             const avgPayout = (totalPayout / payoutCounter).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-            $('div#' + msg['card']).find('label.acc-avg-payout').text('$' + avgPayout);
+            botCard.find('label.acc-avg-payout').text('$' + avgPayout);
         };
         const balanceMsg = (msg) => {
-            $('div#' + msg['card']).find('label.acc-balance').text(msg['eventResult']);
+            const botCard = $('div#' + botCardPair[msg['name']]);
+            botCard.find('label.acc-balance').text(msg['eventResult']);
         };
         const loginMsg = (msg) => {
             console.log('account just connected!');
-            $('div#' + msg['card']).find('div.acc-status').text('Waiting in hub...');
-            $('div#' + msg['card']).find('select').prop('disabled', true);
+            botCardPair[msg['name']] = cardParent.attr('id');
+            const botCard = $('div#' + botCardPair[msg['name']]);
+            botCard.find('div.acc-status').text('Waiting in hub...');
+            botCard.find('select').prop('disabled', true);
         };
         const hubMsg = (msg) => {
-            loader.consoleOnlineSwitch($('div#' + msg['card']));
-            $('div#' + msg['card']).find('div.acc-status').text('Queueing on ' + realm + '...');
+            const botCard = $('div#' + botCardPair[msg['name']]);
+            loader.consoleOnlineSwitch(botCard);
+            botCard.find('div.acc-status').text('Queueing on ' + realm + '...');
         };
         const insideMsg = (msg) => {
-            $('div#' + msg['card']).find('div.acc-status').text('Stalking your chunk...');
+            const botCard = $('div#' + botCardPair[msg['name']]);
+            botCard.find('div.acc-status').text('Stalking your chunk...');
         };
         const logoutMsg = (result) => {
-            $('div#' + result['card']).find('div.acc-status').text('');
-            $('div#' + result['card']).find('label.acc-balance').text('-');
-            $('div#' + result['card']).find('label.acc-payout').text('-');
-            $('div#' + result['card']).find('label.acc-avg-payout').text('-');
-            $('div#' + result['card']).find('select').prop('disabled', false);
+            const botCard = 'div#' + botCardPair[result['username']];
             if (result['isManual'] == true) {
-                $(document).off('click', 'div[id^="card-"] > div > div > div > div a.online', logoutBtn);
-                $(document).off('click', 'a.lConsole', callConsole);
+                $(botCard).find('div.acc-status').text('');
+                $(botCard).find('label.acc-balance').text('-');
+                $(botCard).find('label.acc-payout').text('-');
+                $(botCard).find('label.acc-avg-payout').text('-');
+                $(botCard).find('select').prop('disabled', false);
+                // $(document).off('click', botCard + ' a.online', logoutBtn);
+                // $(document).off('click', botCard + ' a.lConsole', callConsole);
                 botEventEmit.removeListener('Logout', logoutMsg);
-                loader.consoleOfflineSwitch($('div#' + result['card']));
+                loader.consoleOfflineSwitch(botCard);
+                delete botCardPair[result['username']];
             } else {
-                $('div#' + result['card']).parent().find('div.acc-status').text('Will reconnect when internet is back!');
+                botCard.parent().find('div.acc-status').text('Will reconnect when internet is back!');
                 setTimeout(function () {
                     botter.minesagaReconnect(result['username']);
                 }, 10000);
@@ -177,8 +189,8 @@ $(document).on('click', 'a.offline', (e) => {
         botEventEmit.on('Logout', logoutMsg);
 
         //account card button listener binding
-        $(document).on('click', 'a.lConsole', callConsole);
-        $(document).on('click', 'a.online', logoutBtn);
+        $(document).on('click', 'div#' + cardParent.attr('id') + ' a.lConsole', callConsole);
+        $(document).on('click', 'div#' + cardParent.attr('id') + ' a.online', logoutBtn);
 
         //login method up to selected server
         if (server == 'minesaga') {

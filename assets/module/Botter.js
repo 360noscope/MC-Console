@@ -18,7 +18,7 @@ module.exports = function (eventEmit) {
         bot.on('kicked', function (reason, loggedIn) {
             console.log("You're kicked because " + reason);
             Database.updateData('accounts', { 'key': data['email'], 'data': { 'status': 'offline' } }, () => {
-                eventEmit.emit('Logout', { 'username': bot.username, 'isManual': false, 'card': data['cardId'] });
+                eventEmit.emit('Logout', { 'username': bot.username, 'isManual': false });
             });
         });
         bot.on('end', function () {
@@ -30,11 +30,11 @@ module.exports = function (eventEmit) {
                 isManual = true;
             }
             Database.updateData('accounts', { 'key': data['email'], 'data': { 'status': 'offline' } }, () => {
-                eventEmit.emit('Logout', { 'username': bot.username, 'isManual': isManual, 'card': data['cardId'] });
+                eventEmit.emit('Logout', { 'username': bot.username, 'isManual': isManual });
             });
         });
         bot.on('login', function () {
-            eventEmit.emit('Login', { 'card': data['cardId'] });
+            eventEmit.emit('Login', { 'name': bot.username });
             Database.updateData('accounts', { 'key': data['email'], 'data': { 'status': 'online' } }, () => {
                 bot.on('message', function (res) {
                     chatter.minesaga(res, function (chatData) {
@@ -47,12 +47,11 @@ module.exports = function (eventEmit) {
                             } else if (eventResult['type'] == 'Inside') {
                                 bot.chat('/bal');
                             }
-                            eventEmit.emit(eventResult['type'], { 'card': data['cardId'], 'eventResult': eventResult['result'] });
+                            eventEmit.emit(eventResult['type'], { 'name': bot.username, 'eventResult': eventResult['result'] });
                         }
-                        eventEmit.emit('chatMsg', { 'card': data['cardId'], 'msg': chatData['decoratedChat'] });
+                        eventEmit.emit('chatMsg', chatData['decoratedChat']);
                     });
                 });
-                bots[data['cardId']] = { 'username': bot.username, 'bot': bot };
                 const accInfo = {
                     'host': data['host'],
                     'email': data['email'],
@@ -60,7 +59,7 @@ module.exports = function (eventEmit) {
                     'realm': data['realm'],
                     'cardId': data['cardId']
                 };
-                connectInfos[bot.username] = { 'loginInfo': accInfo, 'id': data['cardId'] };
+                bots[bot.username] = { 'username': bot.username, 'bot': bot, 'loginInfo': accInfo };
             });
         });
     };
@@ -70,9 +69,7 @@ module.exports = function (eventEmit) {
             let connStatus = navigator.onLine ? 'online' : 'offline';
             console.log(connStatus);
             if (connStatus == 'online') {
-                const loginInfo = connectInfos[username];
-                const id = loginInfo['id'];
-                delete bots[id];
+                const loginInfo = bots[username]['loginInfo'];
                 minesagaJoin(loginInfo['loginInfo']);
             }
         };
@@ -81,18 +78,15 @@ module.exports = function (eventEmit) {
         $(window).on('online', checkConnection);
     };
 
-    const botChat = (id, msg) => {
-        const bot = bots[id]['bot'];
+    const botChat = (name, msg) => {
+        const bot = bots[name]['bot'];
         bot.chat(msg);
     };
 
-    const botDisconnect = (id) => {
-        manualLogout = true;
-        const bot = bots[id]['bot'];
-        const botUsername = bot.username;
+    const botDisconnect = (name) => {
+        const bot = bots[name]['bot'];
         bot.end();
-        delete bots[id];
-        delete connectInfos[botUsername];
+        delete bots[name];
     };
 
     const displayBotStatus = (key) => {
