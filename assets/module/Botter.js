@@ -1,5 +1,5 @@
 module.exports = function (eventEmit) {
-    const bots = {}, connectInfos = {};
+    const bots = {}, botCardpairs = {};
     const mineflayer = require('mineflayer');
     const Database = require('../module/Database')();
     const chatter = require('../module/Chatter')();
@@ -24,10 +24,11 @@ module.exports = function (eventEmit) {
         bot.on('end', function () {
             console.log('User disconected!');
             let isManual = false;
-            if (connectInfos.hasOwnProperty(bot.username)) {
+            if (bots.hasOwnProperty(bot.username) != false) {
                 isManual = false;
             } else {
                 isManual = true;
+                removeBotCard(bot.username);
             }
             Database.updateData('accounts', { 'key': data['email'], 'data': { 'status': 'offline' } }, () => {
                 eventEmit.emit('Logout', { 'username': bot.username, 'isManual': isManual });
@@ -59,7 +60,7 @@ module.exports = function (eventEmit) {
                     'realm': data['realm'],
                     'cardId': data['cardId']
                 };
-                bots[bot.username] = { 'username': bot.username, 'bot': bot, 'loginInfo': accInfo };
+                bots[bot.username] = { 'bot': bot, 'loginInfo': accInfo };
             });
         });
     };
@@ -89,16 +90,30 @@ module.exports = function (eventEmit) {
         delete bots[name];
     };
 
-    const displayBotStatus = (key) => {
+    const getBotCardStatus = (cardBot) => {
         let result = 'offline';
-        if (bots.hasOwnProperty(key)) {
-            result = bots[key];
+        if(typeof botCardpairs.botName != undefined){
+            if (bots.hasOwnProperty(getBotName(cardBot))) {
+                result = bots[key];
+            }
         }
         return result;
     };
 
-    const displayBotConnectInfo = (username) => {
-        return connectInfos[username];
+    const matchBotCard = (botName, card) => {
+        botCardpairs[botName] = card;
+    };
+
+    const getBotCard = (botName) => {
+        return botCardpairs[botName]
+    };
+
+    const getBotName = (card) => {
+        return Object.keys(botCardPairs).find(key => botCardpairs[key] === card); //botcardpair is undefined
+    };
+
+    const removeBotCard = (botName) => {
+        delete botCardpairs[botName];
     };
 
     return {
@@ -106,7 +121,9 @@ module.exports = function (eventEmit) {
         minesagaReconnect: minesagaReconnect,
         botChat: botChat,
         botDisconnect: botDisconnect,
-        displayBotStatus: displayBotStatus,
-        displayBotConnectInfo: displayBotConnectInfo
+        getBotCardStatus: getBotCardStatus,
+        matchBotCard: matchBotCard,
+        getBotName: getBotName,
+        getBotCard: getBotCard
     }
 }

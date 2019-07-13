@@ -60,11 +60,11 @@ module.exports = function () {
                                 password: accRes[accKey]['password'],
                                 status: accRes[accKey]['status']
                             };
-                            const botInfo = botter.displayBotStatus(cardID);
-                            if (botInfo != 'offline') {
-                                const connInfo = botter.displayBotConnectInfo(botInfo['bot'].username)['loginInfo'];
-                                displayOnlineCard(cardContent, connInfo);
-                                botInfo['bot'].chat('/bal');
+                            const botStatus = botter.getBotCardStatus(cardID);
+                            if (botStatus != 'offline') {
+                                const divBody = $('div#' + cardID);
+                                displayOnlineCard(divBody, botStatus['loginInfo']);
+                                botStatus['bot'].chat('/bal');
                             }
                             cardCounter++;
                         });

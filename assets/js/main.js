@@ -3,7 +3,6 @@ require('datatables.net-buttons-bs4')();
 require('datatables.net-responsive-bs4')();
 require('datatables.net-rowgroup-bs4')();
 
-const fs = require('fs');
 const Database = require('../module/Database')();
 const EventEmitter = require('events').EventEmitter;
 const loader = require('../module/pageLoader')();
@@ -59,7 +58,6 @@ $(document).on('click', '#addServer', { 'action': 'new' }, (e) => {
 //Botting part
 const botEventEmit = new EventEmitter();
 const botter = require('../module/Botter.js')(botEventEmit);
-const botCardPair = {};
 $(document).on('click', '#cClient', (e) => {
     loader.manageConsole(botter, (res) => {
         accountScreenList = res['accList'];
@@ -93,18 +91,16 @@ $(document).on('click', 'a.offline', (e) => {
         //account card button function
         const callConsole = (e) => {
             e.preventDefault();
-            modal.consoleModal(loader, (cmodal) => {
+            modal.consoleModal(loader, cardParent.attr('id'), (cmodal) => {
                 const parentId = cmodal.$body.find('form#chatForm input#parentID').val();
-                const msgDestination = Object.keys(botCardPair).find(key => botCardPair[key] === parentId);
-                const chatSendBtn = (e) => {
+                const msgDestination = botter.getBotName(parentId);
+                $(document).off('submit', 'form#chatForm').on('submit', 'form#chatForm', { 'name': msgDestination }, function (e) {
+                    e.preventDefault();
                     if (cmodal.$body.find('form#chatForm #msgInput').val() != '') {
-                        botter.botChat(e.data.id, cmodal.$body.find('form#chatForm #msgInput').val());
+                        botter.botChat(e.data.name, cmodal.$body.find('form#chatForm #msgInput').val());
                         cmodal.$body.find('form#chatForm #msgInput').val('');
                     }
-                    return false;
-                };
-                $(document).off('submit', 'form#chatForm', chatSendBtn)
-                    .on('submit', 'form#chatForm', { 'name': msgDestination }, chatSendBtn);
+                });
                 const chatboxPopulate = (msg) => {
                     cmodal.$body.find('#chatBox').append(msg);
                     cmodal.$body.find('#chatBox').animate({
@@ -113,7 +109,6 @@ $(document).on('click', 'a.offline', (e) => {
                 };
                 const removeChatEvent = () => {
                     botEventEmit.removeListener('chatMsg', chatboxPopulate);
-                    $(document).off('submit', 'form#chatForm', chatSendBtn);
                 };
                 botEventEmit.on('chatMsg', chatboxPopulate);
                 botEventEmit.on('consoleClose', removeChatEvent);
@@ -121,7 +116,7 @@ $(document).on('click', 'a.offline', (e) => {
         };
         const logoutBtn = (e) => {
             e.preventDefault();
-            const selectedBot = Object.keys(botCardPair).find(key => botCardPair[key] === cardParent.attr('id'));
+            const selectedBot = botter.getBotName(cardParent.attr('id'));
             botter.botDisconnect(selectedBot);
             botEventEmit.removeListener('Payout', payoutMsg);
             botEventEmit.removeListener('Balance', balanceMsg);
@@ -132,7 +127,7 @@ $(document).on('click', 'a.offline', (e) => {
 
         //bot event function
         const payoutMsg = (msg) => {
-            const botCard = $('div#' + botCardPair[msg['name']]);
+            const botCard = $('div#' + botter.getBotCard(msg['name']));
             botCard.find('label.acc-payout').text(msg['eventResult']);
             payoutCounter++;
             totalPayout += parseInt(msg['eventResult'].substring(1).replace(/\,/g, ''), 10);
@@ -140,38 +135,35 @@ $(document).on('click', 'a.offline', (e) => {
             botCard.find('label.acc-avg-payout').text('$' + avgPayout);
         };
         const balanceMsg = (msg) => {
-            const botCard = $('div#' + botCardPair[msg['name']]);
+            const botCard = $('div#' + botter.getBotCard(msg['name']));
             botCard.find('label.acc-balance').text(msg['eventResult']);
         };
         const loginMsg = (msg) => {
             console.log('account just connected!');
-            botCardPair[msg['name']] = cardParent.attr('id');
-            const botCard = $('div#' + botCardPair[msg['name']]);
+            botter.matchBotCard(msg['name'], cardParent.attr('id'));
+            const botCard = $('div#' + botter.getBotCard(msg['name']));
             botCard.find('div.acc-status').text('Waiting in hub...');
             botCard.find('select').prop('disabled', true);
         };
         const hubMsg = (msg) => {
-            const botCard = $('div#' + botCardPair[msg['name']]);
+            const botCard = $('div#' + botter.getBotCard(msg['name']));
             loader.consoleOnlineSwitch(botCard);
             botCard.find('div.acc-status').text('Queueing on ' + realm + '...');
         };
         const insideMsg = (msg) => {
-            const botCard = $('div#' + botCardPair[msg['name']]);
+            const botCard = $('div#' + botter.getBotCard(msg['name']));
             botCard.find('div.acc-status').text('Stalking your chunk...');
         };
         const logoutMsg = (result) => {
-            const botCard = 'div#' + botCardPair[result['username']];
+            const botCard = 'div#' + botter.getBotCard(msg['name']);
             if (result['isManual'] == true) {
                 $(botCard).find('div.acc-status').text('');
                 $(botCard).find('label.acc-balance').text('-');
                 $(botCard).find('label.acc-payout').text('-');
                 $(botCard).find('label.acc-avg-payout').text('-');
                 $(botCard).find('select').prop('disabled', false);
-                // $(document).off('click', botCard + ' a.online', logoutBtn);
-                // $(document).off('click', botCard + ' a.lConsole', callConsole);
+                loader.consoleOfflineSwitch($(botCard));
                 botEventEmit.removeListener('Logout', logoutMsg);
-                loader.consoleOfflineSwitch(botCard);
-                delete botCardPair[result['username']];
             } else {
                 botCard.parent().find('div.acc-status').text('Will reconnect when internet is back!');
                 setTimeout(function () {
