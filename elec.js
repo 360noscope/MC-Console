@@ -26,6 +26,7 @@ function createWindow() {
 
     win.on('ready-to-show', () => {
         win.show();
+        win.toggleDevTools();
     })
     win.on('closed', () => {
         win = null

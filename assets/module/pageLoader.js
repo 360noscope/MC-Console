@@ -61,10 +61,8 @@ module.exports = function () {
                                 status: accRes[accKey]['status']
                             };
                             const botStatus = botter.getBotCardStatus(cardID);
-                            if (botStatus != 'offline') {
-                                const divBody = $('div#' + cardID);
-                                displayOnlineCard(divBody, botStatus['loginInfo']);
-                                botStatus['bot'].chat('/bal');
+                            if (botStatus == 'online') {
+                                displayOnlineCard(cardID, botter);
                             }
                             cardCounter++;
                         });
@@ -80,12 +78,19 @@ module.exports = function () {
         });
     };
 
-    const displayOnlineCard = (cardContent, conInfo) => {
-        consoleOnlineSwitch(cardContent);
-        cardContent.find('select.server-selector select').val(conInfo['host']);
-        cardContent.find('select.realm-selector select').val(conInfo['realm']);
+    const displayOnlineCard = (card, botter) => {
+        const cardContent = $('div#' + card);
+        const loginInfo = botter.getBotLoginInfo(botter.getBotName(card));
+        consoleOnlineSwitch('div#' + card);
+        const accStep = botter.getBotStep(botter.getBotName(card));
+        if (accStep == 'hub') {
+            cardContent.find('div.acc-status').text('Queueing on ' + loginInfo['realm'] + '...');
+        } else if (accStep == 'inside') {
+            cardContent.find('div.acc-status').text('Stalking your chunk...');
+        }
+        cardContent.find('select.server-selector select').val(loginInfo['host']);
+        cardContent.find('select.realm-selector select').val(loginInfo['realm']);
         cardContent.find('select').prop('disabled', true);
-        cardContent.find('div.acc-status').text('Stalking your chunk...');
     };
 
     const consoleModal = (container, doneLoad) => {
@@ -95,9 +100,10 @@ module.exports = function () {
         });
     };
 
-    const consoleOnlineSwitch = (card) => {
-        $('div#' + card.attr('id') + ' > div').attr('class', 'card border-left-success shadow h-100 py-2');
-        card.find('i.actionbtnIcon').attr('class', 'fas fa-stop actionBtnIcon');
+    const consoleOnlineSwitch = (id) => {
+        const card = $(id + ' > div > div > div > div');
+        $(id + ' > div').attr('class', 'card border-left-success shadow h-100 py-2');
+        card.find('i.actionBtnIcon').attr('class', 'fas fa-stop actionBtnIcon');
         card.find('span.actionBtnText').text('Stop Agent!');
         card.find('a.actionBtn').removeClass('btn-success').addClass('btn-danger')
             .removeClass('offline').addClass('online');
@@ -109,11 +115,12 @@ module.exports = function () {
         $(consoleBtn).insertAfter(card.find('a.actionBtn'));
     };
 
-    const consoleOfflineSwitch = (card) => {
-        $('#' + card.attr('id') + ' > div').attr('class', 'card border-left-danger shadow h-100 py-2');
+    const consoleOfflineSwitch = (id) => {
+        const card = $(id + ' > div > div > div > div');
+        $(id + ' > div').attr('class', 'card border-left-danger shadow h-100 py-2');
         card.find('a.actionBtn').removeClass('btn-danger').addClass('btn-success')
             .removeClass('online').addClass('offline');
-        card.find('i.actionbtnIcon').attr('class', 'fas fa-play actionBtnIcon');
+        card.find('i.actionBtnIcon').attr('class', 'fas fa-play actionBtnIcon');
         card.find('span.actionBtnText').text('Start Agent!');
         card.find('a.lConsole').remove();
     };

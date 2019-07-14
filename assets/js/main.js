@@ -141,13 +141,13 @@ $(document).on('click', 'a.offline', (e) => {
         const loginMsg = (msg) => {
             console.log('account just connected!');
             botter.matchBotCard(msg['name'], cardParent.attr('id'));
-            const botCard = $('div#' + botter.getBotCard(msg['name']));
-            botCard.find('div.acc-status').text('Waiting in hub...');
-            botCard.find('select').prop('disabled', true);
+            const botCard = 'div#' + botter.getBotCard(msg['name']);
+            loader.consoleOnlineSwitch(botCard);
+            $(botCard).find('div.acc-status').text('Waiting in hub...');
+            $(botCard).find('select').prop('disabled', true);
         };
         const hubMsg = (msg) => {
             const botCard = $('div#' + botter.getBotCard(msg['name']));
-            loader.consoleOnlineSwitch(botCard);
             botCard.find('div.acc-status').text('Queueing on ' + realm + '...');
         };
         const insideMsg = (msg) => {
@@ -155,14 +155,14 @@ $(document).on('click', 'a.offline', (e) => {
             botCard.find('div.acc-status').text('Stalking your chunk...');
         };
         const logoutMsg = (result) => {
-            const botCard = 'div#' + botter.getBotCard(msg['name']);
+            const botCard = 'div#' + botter.getBotCard(result['name']);
             if (result['isManual'] == true) {
                 $(botCard).find('div.acc-status').text('');
                 $(botCard).find('label.acc-balance').text('-');
                 $(botCard).find('label.acc-payout').text('-');
                 $(botCard).find('label.acc-avg-payout').text('-');
                 $(botCard).find('select').prop('disabled', false);
-                loader.consoleOfflineSwitch($(botCard));
+                loader.consoleOfflineSwitch(botCard);
                 botEventEmit.removeListener('Logout', logoutMsg);
             } else {
                 botCard.parent().find('div.acc-status').text('Will reconnect when internet is back!');

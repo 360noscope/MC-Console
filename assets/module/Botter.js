@@ -44,8 +44,10 @@ module.exports = function (eventEmit) {
                             if (eventResult['type'] == 'Payout') {
                                 bot.chat('/bal');
                             } else if (eventResult['type'] == 'Hub') {
+                                bots[bot.username]['step'] = 'hub';
                                 bot.chat('/joinqueue ' + data['realm']);
                             } else if (eventResult['type'] == 'Inside') {
+                                bots[bot.username]['step'] = 'inside';
                                 bot.chat('/bal');
                             }
                             eventEmit.emit(eventResult['type'], { 'name': bot.username, 'eventResult': eventResult['result'] });
@@ -60,7 +62,7 @@ module.exports = function (eventEmit) {
                     'realm': data['realm'],
                     'cardId': data['cardId']
                 };
-                bots[bot.username] = { 'bot': bot, 'loginInfo': accInfo };
+                bots[bot.username] = { 'bot': bot, 'loginInfo': accInfo, 'step': '' };
             });
         });
     };
@@ -92,10 +94,9 @@ module.exports = function (eventEmit) {
 
     const getBotCardStatus = (cardBot) => {
         let result = 'offline';
-        if(typeof botCardpairs.botName != undefined){
-            if (bots.hasOwnProperty(getBotName(cardBot))) {
-                result = bots[key];
-            }
+        if (bots.hasOwnProperty(getBotName(cardBot))) {
+            bots[getBotName(cardBot)]['bot'].chat('/bal');
+            result = 'online';
         }
         return result;
     };
@@ -109,11 +110,19 @@ module.exports = function (eventEmit) {
     };
 
     const getBotName = (card) => {
-        return Object.keys(botCardPairs).find(key => botCardpairs[key] === card); //botcardpair is undefined
+        return Object.keys(botCardpairs).find(key => botCardpairs[key] === card); //botcardpair is undefined
     };
 
     const removeBotCard = (botName) => {
         delete botCardpairs[botName];
+    };
+
+    const getBotStep = (botName) => {
+        return bots[botName]['step'];
+    };
+
+    const getBotLoginInfo = (botName) => {
+        return bots[botName]['loginInfo'];
     };
 
     return {
@@ -124,6 +133,8 @@ module.exports = function (eventEmit) {
         getBotCardStatus: getBotCardStatus,
         matchBotCard: matchBotCard,
         getBotName: getBotName,
-        getBotCard: getBotCard
+        getBotCard: getBotCard,
+        getBotStep: getBotStep,
+        getBotLoginInfo: getBotLoginInfo
     }
 }
