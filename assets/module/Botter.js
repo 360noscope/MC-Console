@@ -28,7 +28,6 @@ module.exports = function (eventEmit) {
                 isManual = false;
             } else {
                 isManual = true;
-                removeBotCard(bot.username);
             }
             Database.updateData('accounts', { 'key': data['email'], 'data': { 'status': 'offline' } }, () => {
                 eventEmit.emit('Logout', { 'username': bot.username, 'isManual': isManual });
@@ -73,7 +72,7 @@ module.exports = function (eventEmit) {
             console.log(connStatus);
             if (connStatus == 'online') {
                 const loginInfo = bots[username]['loginInfo'];
-                minesagaJoin(loginInfo['loginInfo']);
+                minesagaJoin(loginInfo);
             }
         };
         checkConnection();
@@ -135,6 +134,7 @@ module.exports = function (eventEmit) {
         getBotName: getBotName,
         getBotCard: getBotCard,
         getBotStep: getBotStep,
-        getBotLoginInfo: getBotLoginInfo
+        getBotLoginInfo: getBotLoginInfo,
+        removeBotCard: removeBotCard
     }
 }

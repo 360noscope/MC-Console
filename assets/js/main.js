@@ -155,7 +155,7 @@ $(document).on('click', 'a.offline', (e) => {
             botCard.find('div.acc-status').text('Stalking your chunk...');
         };
         const logoutMsg = (result) => {
-            const botCard = 'div#' + botter.getBotCard(result['name']);
+            const botCard = 'div#' + botter.getBotCard(result['username']);
             if (result['isManual'] == true) {
                 $(botCard).find('div.acc-status').text('');
                 $(botCard).find('label.acc-balance').text('-');
@@ -163,9 +163,10 @@ $(document).on('click', 'a.offline', (e) => {
                 $(botCard).find('label.acc-avg-payout').text('-');
                 $(botCard).find('select').prop('disabled', false);
                 loader.consoleOfflineSwitch(botCard);
+                botter.removeBotCard(result['username']);
                 botEventEmit.removeListener('Logout', logoutMsg);
             } else {
-                botCard.parent().find('div.acc-status').text('Will reconnect when internet is back!');
+                $(botCard).find('div.acc-status').text('Will reconnect when internet is back!');
                 setTimeout(function () {
                     botter.minesagaReconnect(result['username']);
                 }, 10000);
@@ -181,8 +182,10 @@ $(document).on('click', 'a.offline', (e) => {
         botEventEmit.on('Logout', logoutMsg);
 
         //account card button listener binding
-        $(document).on('click', 'div#' + cardParent.attr('id') + ' a.lConsole', callConsole);
-        $(document).on('click', 'div#' + cardParent.attr('id') + ' a.online', logoutBtn);
+        $(document).off('click', 'div#' + cardParent.attr('id') + ' a.lConsole', callConsole)
+            .on('click', 'div#' + cardParent.attr('id') + ' a.lConsole', callConsole);
+        $(document).off('click', 'div#' + cardParent.attr('id') + ' a.online', logoutBtn)
+            .on('click', 'div#' + cardParent.attr('id') + ' a.online', logoutBtn);
 
         //login method up to selected server
         if (server == 'minesaga') {
