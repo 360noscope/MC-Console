@@ -197,3 +197,10 @@ $(document).on('click', 'a.offline', (e) => {
     return false;
 });
 //end botting part
+
+$(document).on('click', '#chatLog', (e) => {
+    e.preventDefault();
+    loader.chatLog(() => {
+    });
+});
+

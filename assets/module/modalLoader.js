@@ -149,7 +149,9 @@ module.exports = function (eventEmit) {
                 });
             }
         });
-    }
+    };
+
+    
 
     return {
         accountModal: accountModal,

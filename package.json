@@ -25,6 +25,7 @@
     "jquery": "^3.4.1",
     "jquery-confirm": "^3.3.4",
     "jquery.easing": "^1.4.1",
-    "mineflayer": "^2.9.0"
+    "mineflayer": "^2.9.0",
+    "mojang-api": "^0.0.2"
   }
 }

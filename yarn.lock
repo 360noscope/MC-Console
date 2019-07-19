@@ -1101,6 +1101,13 @@ mkdirp@0.5.1, mkdirp@^0.5.0, mkdirp@^0.5.1:
   dependencies:
     minimist "0.0.8"
 
+mojang-api@^0.0.2:
+  version "0.0.2"
+  resolved "https://registry.yarnpkg.com/mojang-api/-/mojang-api-0.0.2.tgz#c624b9487cbee6a7ce84822cf966757e7c2fc665"
+  integrity sha1-xiS5SHy+5qfOhIIs+WZ1fnwvxmU=
+  dependencies:
+    request "^2.53.0"
+
 mojangson@^0.2.1:
   version "0.2.3"
   resolved "https://registry.yarnpkg.com/mojangson/-/mojangson-0.2.3.tgz#4d0eb6e5052074e5040b3997fb51dd9744b11e54"
@@ -1630,7 +1637,7 @@ repeating@^2.0.0:
   dependencies:
     is-finite "^1.0.0"
 
-request@^2.45.0, request@^2.87.0:
+request@^2.45.0, request@^2.53.0, request@^2.87.0:
   version "2.88.0"
   resolved "https://registry.yarnpkg.com/request/-/request-2.88.0.tgz#9c2fca4f7d35b592efe57c7f0a55e81052124fef"
   integrity sha512-NAqBSrijGLZdM0WZNsInLJpkJokL72XYjUpnB0iwsRgxh7dB6COrHnTBNwN0E+lHDAJzu7kLAkDeY08z2/A0hg==

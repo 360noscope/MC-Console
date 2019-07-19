@@ -3,6 +3,7 @@ module.exports = function (eventEmit) {
     const mineflayer = require('mineflayer');
     const Database = require('../module/Database')();
     const chatter = require('../module/Chatter')();
+    const logger = require('../module/Logger')();
 
     const minesagaJoin = (data) => {
         const serverOption = {
@@ -49,6 +50,7 @@ module.exports = function (eventEmit) {
                                 bots[bot.username]['step'] = 'inside';
                                 bot.chat('/bal');
                             }
+                            logger.writeChatLog(bot.player.username, chatData['stripedText']);
                             eventEmit.emit(eventResult['type'], { 'name': bot.username, 'eventResult': eventResult['result'] });
                         }
                         eventEmit.emit('chatMsg', chatData['decoratedChat']);

@@ -4,6 +4,7 @@ module.exports = function () {
     const { remote } = require('electron');
 
     const dataPath = path.join(remote.app.getPath('appData'), '/mcconsole/');
+    const logPath = path.join(remote.app.getPath('appData'), '/mcconsole/log/');
     const createDatabase = () => {
         //Creating database when first launching app
         const pathList = {
@@ -12,6 +13,9 @@ module.exports = function () {
         };
         if (!fs.existsSync(dataPath)) {
             fs.mkdirSync(dataPath);
+            if (!fs.existsSync(logPath)) {
+                fs.mkdirSync(logPath);
+            }
         }
         for (key in pathList) {
             if (!fs.existsSync(pathList[key])) {

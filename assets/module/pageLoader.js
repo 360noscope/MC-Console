@@ -1,6 +1,7 @@
 module.exports = function () {
     const tables = require('../module/tableMan')();
     const Database = require('../module/Database')();
+    const logger = require('../module/Logger')();
     const manageAccount = (done) => {
         $(document).find('#page-content').load('../html/accountManage.html', () => {
             tables.listAccount((res) => {
@@ -125,6 +126,39 @@ module.exports = function () {
         card.find('a.lConsole').remove();
     };
 
+    const chatLog = (done) => {
+        $(document).find('#page-content').load('../html/chatLogConsole.html', () => {
+            const logSelectorGroup = $('div#logSelectorGroup');
+            const logSelector = $('select#logSelector');
+            const logDisplay = $('div#logDisplay');
+            const accSelector = $('div#logManageCard select#logAccount');
+            const logPanel = $('div#logManageCard');
+            logSelectorGroup.hide();
+            logDisplay.hide();
+            Database.readData('accounts', '*', (res) => {
+                for (key in res) {
+                    accSelector.append($("<option />").val(key).text(key));
+                }
+                $(document).off('click', '#searchLog').on('click', '#searchLog', (e) => {
+                    logger.listLogFile(accSelector.find('option:selected').val(), (res) => {
+                        logPanel.append('');
+                        res.forEach((log) => {
+                            logSelector.append($("<option />").val(log).text(log));
+                        });
+                        logSelectorGroup.show();
+                        $(document).off('click', 'button#openLog').on('click', 'button#openLog', (e) => {
+                            logger.readChatLog(logSelector.find('option:selected').val(), (res)=>{
+
+                            });
+                            logDisplay.show();
+                        });
+                    });
+                });
+                done();
+            });
+        });
+    };
+
     return {
         manageAccount: manageAccount,
         accountForm: accountForm,
@@ -133,6 +167,7 @@ module.exports = function () {
         consoleModal: consoleModal,
         consoleOnlineSwitch: consoleOnlineSwitch,
         consoleOfflineSwitch: consoleOfflineSwitch,
-        serverForm: serverForm
+        serverForm: serverForm,
+        chatLog: chatLog
     }
 }
